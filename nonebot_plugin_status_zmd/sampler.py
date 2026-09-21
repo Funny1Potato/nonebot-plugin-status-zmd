@@ -15,8 +15,12 @@ from .collectors import (
     StaticInfo,
     collect_snapshot,
     collect_static,
+    prime_snapshot,
 )
 from .config import config
+
+#: 建立基准后等这么久再采第一次，让首采就有真实的时间窗口
+PRIME_INTERVAL = 0.6
 
 
 class Sampler:
@@ -47,13 +51,24 @@ class Sampler:
             self.static = await collect_static()
         return self.static
 
+    async def prime(self) -> None:
+        """建立 CPU / 磁盘 / 网络 / 进程的采样基准。
+
+        不踩基准的话首采必然偏空：CPU 差值算不出来（psutil 的规定是首值无
+        意义），磁盘与网络速率没有参照，进程 CPU 全是 0.0——也就是「刚启动
+        的那张图 CPU 显示 0」。
+        """
+        await prime_snapshot(self._collector)
+        await asyncio.sleep(PRIME_INTERVAL)
+
     async def collect_once(self) -> Snapshot:
         async with self._lock:
             snapshot = await collect_snapshot(self._collector)
 
             self.latest = snapshot
             self.last_error = None
-            self.cpu_hist.append(snapshot.cpu.percent)
+            # CPU 无基准时为 None，历史按 0 记以保持与内存序列等长
+            self.cpu_hist.append(snapshot.cpu.percent or 0.0)
             self.mem_hist.append(snapshot.mem.percent)
 
             for disk in snapshot.disks:
@@ -87,6 +102,7 @@ class Sampler:
 
     async def start(self) -> None:
         await self.ensure_static()
+        await self.prime()
         try:
             await self.collect_once()
         except Exception as e:  # noqa: BLE001

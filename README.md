@@ -149,6 +149,13 @@ status
   WMI），显示 `—`。
 - **网络地址**：只列 `10./192./172./100.` 段的地址，最多 3 条；`169.254` 这类自动
   获取失败的地址不显示。
+- **CPU 占用**：自己用 `psutil.cpu_times()` 差值算，不用 `psutil.cpu_percent()`——
+  后者的基准是进程级全局变量，其它插件调用一次就会把基准吃掉，且首个返回值按文档
+  本身就是「无意义的 0.0」。插件启动时会先建立基准，所以第一张图就有真实占用率。
+- **缓存**：Bot 头像与渲染失败时的 HTML 落在
+  [nonebot-plugin-localstore](https://github.com/nonebot/plugin-localstore) 的缓存目录
+  （`<localstore cache>/nonebot_plugin_status_zmd`），头像 7 天后过期重取；
+  测试与 `tools/preview.py` 不在插件加载上下文里，这时退回系统临时目录。
 - **收发计数**：接收用事件 hook；发送优先按各适配器的发消息 API 名计数。
   拿不到时显示「未知」，不会假装是 0。
 

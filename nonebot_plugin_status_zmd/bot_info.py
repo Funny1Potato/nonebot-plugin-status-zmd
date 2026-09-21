@@ -15,6 +15,7 @@ from nonebot.adapters import Bot as BaseBot
 from nonebot.adapters import Event as BaseEvent
 from nonebot.message import event_preprocessor
 
+from . import storage
 from .config import config
 from .utils import bytes_to_data_uri
 
@@ -132,7 +133,7 @@ async def _count_message(bot: BaseBot, event: BaseEvent) -> None:
 driver = get_driver()
 
 
-async def _fetch_avatar(url: str) -> str | None:
+async def _fetch_avatar(url: str) -> bytes | None:
     try:
         async with httpx.AsyncClient(
             proxy=config.proxy,
@@ -144,7 +145,7 @@ async def _fetch_avatar(url: str) -> str | None:
     except Exception as e:  # noqa: BLE001
         logger.debug("获取 Bot 头像失败 {}: {}", url, e)
         return None
-    return bytes_to_data_uri(resp.content)
+    return resp.content
 
 
 async def _load_bot_meta(bot: BaseBot) -> None:
@@ -158,8 +159,14 @@ async def _load_bot_meta(bot: BaseBot) -> None:
         return
     _meta_attempted[bot.self_id] = now
 
+    show_avatar = config.zmd_show_bot_avatar
     nickname: str | None = None
-    avatar: str | None = None
+    raw: bytes | None = None
+
+    # 先看 localstore 缓存：重启后不必再拉一遍网络
+    if show_avatar and (cached := await storage.read_avatar(bot.self_id)):
+        raw = cached
+
     try:
         interface = get_interface(bot)
         user = (await interface.get_user(bot.self_id)) if interface else None
@@ -169,22 +176,22 @@ async def _load_bot_meta(bot: BaseBot) -> None:
 
     if user is not None:
         nickname = user.name or None
-        if user.avatar and config.zmd_show_bot_avatar:
-            avatar = await _fetch_avatar(user.avatar)
+        if raw is None and show_avatar and user.avatar:
+            raw = await _fetch_avatar(user.avatar)
 
     if (
-        avatar is None
-        and config.zmd_show_bot_avatar
-        and bot.adapter.get_name()
-        in {
-            "OneBot V11",
-            "Milky",
-        }
+        raw is None
+        and show_avatar
+        and bot.adapter.get_name() in {"OneBot V11", "Milky"}
     ):
-        avatar = await _fetch_avatar(
+        raw = await _fetch_avatar(
             f"https://q.qlogo.cn/headimg_dl?dst_uin={bot.self_id}&spec=160",
         )
 
+    if raw:
+        await storage.write_avatar(bot.self_id, raw)
+
+    avatar = bytes_to_data_uri(raw) if raw else None
     if user is not None or avatar is not None:
         # 真的拿到了结果才缓存；什么都没拿到留给下次重试
         _bot_meta[bot.self_id] = (nickname, avatar)

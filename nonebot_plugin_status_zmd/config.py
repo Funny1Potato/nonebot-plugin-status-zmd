@@ -2,37 +2,16 @@
 
 from __future__ import annotations
 
-import tempfile
-from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 from nonebot import get_plugin_config
-from nonebot_plugin_localstore import get_plugin_cache_dir
 from pydantic import BaseModel, Field, field_validator
 
 PLUGIN_DIR = Path(__file__).parent
 RES_DIR = PLUGIN_DIR / "res"
 TEMPLATE_DIR = RES_DIR / "templates"
 CSS_PATH = RES_DIR / "css" / "index.css"
-
-FALLBACK_CACHE_DIR = Path(tempfile.gettempdir()) / "nonebot_plugin_status_zmd"
-
-
-@lru_cache(maxsize=1)
-def cache_dir() -> Path:
-    """缓存目录。
-
-    惰性求值的原因：localstore 靠调用栈识别插件，只有在 NoneBot 插件加载
-    上下文里才认得出来。测试与 ``tools/preview.py`` 直接 import 时退回临时
-    目录，这样模块在任何上下文里都能被导入。
-    """
-    try:
-        return get_plugin_cache_dir()
-    except RuntimeError:
-        FALLBACK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        return FALLBACK_CACHE_DIR
-
 
 LayoutType = Literal["full", "gauge", "perf"]
 ProcSortByType = Literal["cpu", "mem"]

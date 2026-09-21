@@ -9,6 +9,7 @@ import socket
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import psutil
 
@@ -20,7 +21,8 @@ from .utils import match_any, run_sync
 
 @dataclass
 class CpuStat:
-    percent: float
+    #: 距上次采样窗口的平均占用率；首次采样（无基准）为 None
+    percent: float | None = None
     freq_current: float | None = None  # MHz
     freq_max: float | None = None  # MHz
 
@@ -231,10 +233,58 @@ def collect_static_sync() -> StaticInfo:
 # region 动态采集
 
 
-def _collect_cpu() -> CpuStat:
+class _CpuCounter:
+    """自己用 ``cpu_times`` 差值算占用率。
+
+    不用 ``psutil.cpu_percent()`` 的原因：它的基准是进程级全局变量，任何其它
+    代码（比如同时装了 picstatus）调用一次就会把基准吃掉，导致窗口变成 ~0ms
+    而恒返回 0；而且它的首个返回值按文档就是「无意义的 0.0」。
+    """
+
+    def __init__(self) -> None:
+        # 必须是 psutil 的 scputimes（namedtuple）：它带 idle/iowait 属性，
+        # 一旦退化成普通 tuple，getattr 会静默拿到 0，占用率就恒为 100%
+        self._prev: Any = None
+
+    @staticmethod
+    def _total(times: Any) -> float:
+        total = float(sum(times))
+        # Linux 的 guest 时间已计入 user，psutil 自己也会减掉
+        total -= getattr(times, "guest", 0)
+        total -= getattr(times, "guest_nice", 0)
+        return total
+
+    @classmethod
+    def _busy(cls, times: Any) -> float:
+        return (
+            cls._total(times) - getattr(times, "idle", 0) - getattr(times, "iowait", 0)
+        )
+
+    def prime(self) -> None:
+        """踩一次基准，让下一次 ``percent()`` 立刻有值。"""
+        self._prev = psutil.cpu_times()
+
+    @classmethod
+    def _percent_between(cls, previous: Any, current: Any) -> float | None:
+        all_delta = cls._total(current) - cls._total(previous)
+        if all_delta <= 0:
+            return None
+        busy_delta = cls._busy(current) - cls._busy(previous)
+        return round(min(100.0, max(0.0, busy_delta / all_delta * 100)), 1)
+
+    def percent(self) -> float | None:
+        """距上次调用的平均占用率；没有基准时返回 None。"""
+        current = psutil.cpu_times()
+        previous, self._prev = self._prev, current
+        if previous is None:
+            return None
+        return self._percent_between(previous, current)
+
+
+def _collect_cpu(counter: _CpuCounter) -> CpuStat:
     freq = psutil.cpu_freq()
     return CpuStat(
-        percent=psutil.cpu_percent(),
+        percent=counter.percent(),
         freq_current=getattr(freq, "current", None) or None,
         freq_max=getattr(freq, "max", None) or None,
     )
@@ -295,27 +345,39 @@ class _IoCounter:
             )
         return result
 
-    def disk_rates(self) -> dict[str, tuple[float, float]]:
+    @staticmethod
+    def _snapshot() -> tuple[dict[str, tuple[int, int]], dict[str, tuple[int, int]]]:
         try:
-            counters = psutil.disk_io_counters(perdisk=True) or {}
+            disk_counters = psutil.disk_io_counters(perdisk=True) or {}
         except Exception:
-            return {}
-        curr = {k: (v.read_bytes, v.write_bytes) for k, v in counters.items()}
-        rates = self._rates(self._disk, curr, time.time() - self._ts)
-        self._disk = curr
-        return rates
+            disk_counters = {}
+        try:
+            net_counters = psutil.net_io_counters(pernic=True) or {}
+        except Exception:
+            net_counters = {}
+        return (
+            {k: (v.read_bytes, v.write_bytes) for k, v in disk_counters.items()},
+            {k: (v.bytes_recv, v.bytes_sent) for k, v in net_counters.items()},
+        )
 
-    def net_rates(self) -> dict[str, tuple[float, float]]:
-        try:
-            counters = psutil.net_io_counters(pernic=True) or {}
-        except Exception:
-            return {}
-        curr = {k: (v.bytes_recv, v.bytes_sent) for k, v in counters.items()}
-        elapsed = time.time() - self._ts
+    def prime(self) -> None:
+        """踩一次基准，让下一次 ``rates()`` 立刻有值。"""
+        self._disk, self._net = self._snapshot()
         self._ts = time.time()
-        rates = self._rates(self._net, curr, elapsed)
-        self._net = curr
-        return rates
+
+    def rates(
+        self,
+    ) -> tuple[dict[str, tuple[float, float]], dict[str, tuple[float, float]]]:
+        """返回（磁盘速率, 网卡速率），两者共用同一个时间窗口。"""
+        disk, net = self._snapshot()
+        now = time.time()
+        elapsed = now - self._ts
+        self._ts = now
+
+        disk_rates = self._rates(self._disk, disk, elapsed)
+        net_rates = self._rates(self._net, net, elapsed)
+        self._disk, self._net = disk, net
+        return disk_rates, net_rates
 
 
 def _collect_disks(
@@ -420,16 +482,29 @@ def _collect_procs(logical_cpu: int | None) -> list[ProcStat]:
 
 
 class SnapshotCollector:
-    """持有差分状态，保证同一实例内能算出磁盘/网络速率。"""
+    """持有各计数器的基准，保证能算出速率且第一次采样就有意义的值。"""
 
     def __init__(self) -> None:
+        self._cpu = _CpuCounter()
         self._io = _IoCounter()
 
+    def prime_sync(self) -> None:
+        """建立 CPU / 磁盘 / 网络 / 进程的基准（启动时调用一次）。
+
+        没有基准时：CPU 差值算不出来、磁盘与网络速率是空的、进程 CPU 全是
+        0.0——也就是「刚启动的那张图 CPU 显示 0」。
+        """
+        self._cpu.prime()
+        self._io.prime()
+        # 进程的 cpu_percent 也依赖上一次调用，先踩一次
+        _collect_procs(psutil.cpu_count())
+
     def collect_sync(self) -> Snapshot:
-        cpu = _collect_cpu()
+        cpu = _collect_cpu(self._cpu)
         mem = _collect_mem()
-        disks = _collect_disks(self._io.disk_rates())
-        nets = _collect_nets(self._io.net_rates())
+        disk_rates, net_rates = self._io.rates()
+        disks = _collect_disks(disk_rates)
+        nets = _collect_nets(net_rates)
         procs = _collect_procs(psutil.cpu_count())
         return Snapshot(
             ts=time.time(),
@@ -447,6 +522,10 @@ async def collect_static() -> StaticInfo:
 
 async def collect_snapshot(collector: SnapshotCollector) -> Snapshot:
     return await run_sync(collector.collect_sync)
+
+
+async def prime_snapshot(collector: SnapshotCollector) -> None:
+    return await run_sync(collector.prime_sync)
 
 
 # endregion

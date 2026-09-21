@@ -9,7 +9,7 @@ from nonebot import logger
 from nonebot.adapters import Bot as BaseBot
 
 from ..config import config
-from ..utils import write_debug_html
+from ..storage import write_debug_html
 from .backend import RenderBackendError, backend_label, new_page, probe
 from .env import build_html
 from .model import VIEWPORT_WIDTH, RenderModel, build_model

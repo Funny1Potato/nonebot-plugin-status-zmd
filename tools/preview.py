@@ -173,6 +173,8 @@ def load_demo_data() -> list[FakeBot]:
 
 async def load_live_data() -> list[FakeBot]:
     await sampler.ensure_static()
+    # 必须先建立基准，否则首采的 CPU / 磁盘 / 网络都是空的（CPU 会显示 0）
+    await sampler.prime()
     await sampler.collect_once()
     return []
 

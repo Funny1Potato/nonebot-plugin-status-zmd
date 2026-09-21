@@ -6,7 +6,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from nonebot_plugin_status_zmd import bot_info
+from nonebot_plugin_status_zmd import bot_info, storage
+from nonebot_plugin_status_zmd.utils import bytes_to_data_uri
+
+JPEG = b"\xff\xd8\xff\xe0jpg"
 
 
 class FakeAdapter:
@@ -28,12 +31,16 @@ async def _async_value(value):
 
 
 @pytest.fixture()
-def clean_meta_state():
+def clean_meta_state(tmp_path, monkeypatch):
+    """清内存缓存，并把 localstore 缓存根指到临时目录。"""
     bot_info._bot_meta.clear()
     bot_info._meta_attempted.clear()
-    yield
+    monkeypatch.setattr(storage, "FALLBACK_CACHE_DIR", tmp_path / "cache")
+    storage.cache_dir.cache_clear()
+    yield tmp_path / "cache"
     bot_info._bot_meta.clear()
     bot_info._meta_attempted.clear()
+    storage.cache_dir.cache_clear()
 
 
 @pytest.mark.usefixtures("clean_meta_state")
@@ -102,14 +109,40 @@ async def test_onebot_fallback_url_is_used(monkeypatch):
 
     async def fake_fetch(url: str):
         fetched.append(url)
-        return "data:image/jpeg;base64,AAA"
+        return JPEG
 
     monkeypatch.setattr(bot_info, "_fetch_avatar", fake_fetch)
     monkeypatch.setattr(bot_info, "get_interface", lambda _bot: None)
 
     await bot_info._load_bot_meta(FakeBot("10004", adapter="OneBot V11"))
     assert fetched == ["https://q.qlogo.cn/headimg_dl?dst_uin=10004&spec=160"]
-    assert bot_info._bot_meta["10004"][1] == "data:image/jpeg;base64,AAA"
+    assert bot_info._bot_meta["10004"][1] == bytes_to_data_uri(JPEG)
+
+
+@pytest.mark.usefixtures("clean_meta_state")
+async def test_avatar_is_written_to_localstore_cache(clean_meta_state, monkeypatch):
+    async def fake_fetch(url: str):
+        return JPEG
+
+    monkeypatch.setattr(bot_info, "_fetch_avatar", fake_fetch)
+    monkeypatch.setattr(bot_info, "get_interface", lambda _bot: None)
+
+    await bot_info._load_bot_meta(FakeBot("10006", adapter="OneBot V11"))
+    assert (clean_meta_state / "avatar" / "10006").read_bytes() == JPEG
+
+
+@pytest.mark.usefixtures("clean_meta_state")
+async def test_avatar_cache_hit_skips_network(clean_meta_state, monkeypatch):
+    await storage.write_avatar("10007", JPEG)
+
+    async def fail_fetch(url: str):
+        pytest.fail("命中 localstore 缓存后不应再拉网络")
+
+    monkeypatch.setattr(bot_info, "_fetch_avatar", fail_fetch)
+    monkeypatch.setattr(bot_info, "get_interface", lambda _bot: None)
+
+    await bot_info._load_bot_meta(FakeBot("10007", adapter="OneBot V11"))
+    assert bot_info._bot_meta["10007"][1] == bytes_to_data_uri(JPEG)
 
 
 @pytest.mark.usefixtures("clean_meta_state")

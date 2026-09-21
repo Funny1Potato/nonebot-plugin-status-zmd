@@ -11,8 +11,9 @@ from nonebot.adapters import Bot as BaseBot
 from .. import bot_info
 from ..bot_info import BotStatus
 from ..collectors import Snapshot, StaticInfo
-from ..config import cache_dir, config
+from ..config import config
 from ..sampler import sampler
+from ..storage import cache_dir
 from ..utils import (
     clamp,
     first_str,
@@ -138,13 +139,20 @@ def _build_apps(snapshot: Snapshot) -> list[AppRow]:
 def _cpu_row(snapshot: Snapshot, static: StaticInfo) -> PerfRow:
     cpu = snapshot.cpu
     freq = cpu.freq_current or static.cpu_max_freq
+    threads = static.cpu_logical or "?"
+    if cpu.percent is None:
+        # 没有基准时不要假装是 0
+        load_text, cpu_text = "待首次采样", "—"
+    else:
+        load_text = f"{cpu.percent:.0f}% 负载"
+        cpu_text = format_percent(cpu.percent)
     return PerfRow(
         name="处理器",
-        sub=f"{static.cpu_logical or '?'} 线程 · {cpu.percent:.0f}% 负载",
+        sub=f"{threads} 线程 · {load_text}",
         icon=icon_svg("cpu"),
         hist=_normalize(list(sampler.cpu_hist), limit=100),
         cur1_label="占用",
-        cur1_value=format_percent(cpu.percent),
+        cur1_value=cpu_text,
         cur2_label="速度",
         cur2_value=format_freq(freq),
         spec_label="规格",
@@ -321,6 +329,8 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
         source_text="实时" if sampler.last_error is None else "采样异常",
     )
 
+    cpu_percent = snapshot.cpu.percent or 0.0
+
     if want_gauge:
         from .svg import gauge_svg
 
@@ -331,7 +341,7 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
                 100.0,
             )
 
-        percent = compose(snapshot.cpu.percent, snapshot.mem.percent)
+        percent = compose(cpu_percent, snapshot.mem.percent)
         window = [
             compose(cpu, mem)
             for cpu, mem in zip(sampler.cpu_hist, sampler.mem_hist, strict=False)
@@ -343,7 +353,7 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
             value=round(percent * scale),
             value_peak=round(max(window) * scale),
             value_max=int(config.zmd_gauge_value_max),
-            cpu=snapshot.cpu.percent,
+            cpu=cpu_percent,
             mem=snapshot.mem.percent,
             uptime=format_duration(nonebot_uptime()),
             svg=gauge_svg(percent),
@@ -366,16 +376,10 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
     if "specs" in blocks:
         model.specs = _spec_rows(snapshot, static, len(bots))
 
-    if model.gauge is not None:
-        model.tags = [
-            f"CPU {snapshot.cpu.percent:.0f}%",
-            f"MEM {snapshot.mem.percent:.0f}%",
-            f"综合 {model.gauge.percent:.1f}%",
-        ]
-    else:
-        model.tags = [
-            f"CPU {snapshot.cpu.percent:.0f}%",
-            f"MEM {snapshot.mem.percent:.0f}%",
-        ]
+    tags = [
+        "CPU —" if snapshot.cpu.percent is None else f"CPU {cpu_percent:.0f}%",
+        f"MEM {snapshot.mem.percent:.0f}%",
+    ]
+    model.tags = [*tags, f"综合 {model.gauge.percent:.1f}%"] if model.gauge else tags
 
     return model

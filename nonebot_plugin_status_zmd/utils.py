@@ -12,8 +12,6 @@ from typing import Any, TypeVar
 
 import anyio
 
-from .config import cache_dir
-
 T = TypeVar("T")
 
 # region 数值格式化
@@ -126,13 +124,6 @@ def first_str(*values: Any, default: str = "—") -> str:
 async def run_sync(func: Callable[..., T], *args: Any) -> T:
     """把阻塞调用丢进线程池，避免卡住事件循环。"""
     return await anyio.to_thread.run_sync(functools.partial(func, *args))
-
-
-def write_debug_html(html: str, name: str = "render_debug") -> Path:
-    """渲染失败时把 HTML 落到缓存目录，便于本地排查。"""
-    path = cache_dir() / f"{name}.html"
-    path.write_text(html, encoding="u8")
-    return path
 
 
 # endregion
