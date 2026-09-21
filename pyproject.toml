@@ -1,0 +1,85 @@
+[project]
+name = "nonebot-plugin-status-zmd"
+dynamic = ["version"]
+description = "以《明日方舟：终末地》电量系统风格展示机器人所在服务器运行状态的 NoneBot2 插件"
+authors = [{ name = "Funny1Potato" }]
+dependencies = [
+    "nonebot2>=2.5.0",
+    "nonebot-plugin-apscheduler>=0.5.0",
+    "nonebot-plugin-alconna>=0.62.1",
+    "nonebot-plugin-uninfo>=0.11.2",
+    "nonebot-plugin-htmlrender>=0.6.7",
+    "nonebot-plugin-localstore>=0.7.4",
+    "psutil>=5.9.0",
+    "py-cpuinfo>=9.0.0",
+    "jinja2>=3.1.2",
+    "anyio>=4.0.0",
+    "httpx>=0.27.0",
+]
+requires-python = ">=3.10,<4.0"
+readme = "README.md"
+license = { text = "MIT" }
+keywords = ["nonebot", "nonebot2", "plugin", "status", "psutil", "endfield", "zmd"]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+# htmlrender >= 0.8 不再内置 Playwright，需显式安装 [playwright] extra
+htmlrender8 = ["nonebot-plugin-htmlrender[playwright]>=0.8.0"]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.6.0",
+    "poethepoet>=0.30.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "nonebot_plugin_status_zmd/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nonebot_plugin_status_zmd"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "RUF", "BLE"]
+ignore = [
+    "RUF001", # 中英文混排里的全角标点
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+# NoneBot 的依赖注入式默认值
+extend-immutable-calls = ["nonebot.params.CommandArg", "nonebot.params.Depend"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+# SVG path 数据与正则表没法断行
+"nonebot_plugin_status_zmd/render/icons.py" = ["E501"]
+# 采集层的兜底：任何一项指标取不到都不能让整张图渲染失败
+"nonebot_plugin_status_zmd/collectors.py" = ["BLE001"]
+
+[tool.poe.tasks]
+test.cmd = "pytest"
+lint.cmd = "ruff check ."
+fmt.cmd = "ruff format ."
+preview.cmd = "python tools/preview.py --demo --open"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+markers = ["render: 需要 Playwright 浏览器内核的端到端渲染测试"]
