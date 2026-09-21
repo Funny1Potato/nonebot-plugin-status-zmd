@@ -12,7 +12,7 @@ from .. import bot_info
 from ..bot_info import BotStatus
 from ..collectors import Snapshot, StaticInfo
 from ..config import config
-from ..sampler import sampler
+from ..sampler import SamplerDataUnavailable, sampler
 from ..storage import cache_dir
 from ..utils import (
     clamp,
@@ -232,6 +232,21 @@ def _net_rows(snapshot: Snapshot) -> list[PerfRow]:
     return rows
 
 
+def _build_perf_rows(snapshot: Snapshot, static: StaticInfo) -> list[PerfRow]:
+    """按 STZMD_DEVICES 的列表顺序组装设备行。"""
+    rows: list[PerfRow] = []
+    for device in config.stzmd_devices:
+        if device == "cpu":
+            rows.append(_cpu_row(snapshot, static))
+        elif device == "mem":
+            rows.append(_mem_row(snapshot, static))
+        elif device == "disk":
+            rows.extend(_disk_rows(snapshot))
+        elif device == "net":
+            rows.extend(_net_rows(snapshot))
+    return rows
+
+
 def _bot_rows(bots: list[BaseBot]) -> list[BotRow]:
     now = datetime.now().astimezone()
     statuses: list[BotStatus] = [
@@ -309,6 +324,10 @@ def effective_uptime() -> float:
 
 async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
     static = await sampler.ensure_static()
+    if static is None:
+        raise SamplerDataUnavailable(
+            "静态信息采集超时，稍后再试（可在 STZMD_COLLECT_TIMEOUT 放宽上限）",
+        )
     snapshot = await sampler.ensure_latest()
     blocks = config.enabled_blocks()
     layout = config.stzmd_layout
@@ -365,12 +384,7 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
         model.apps = _build_apps(snapshot)
 
     if "perf" in blocks:
-        model.perf = [
-            _cpu_row(snapshot, static),
-            _mem_row(snapshot, static),
-            *_disk_rows(snapshot),
-            *_net_rows(snapshot),
-        ]
+        model.perf = _build_perf_rows(snapshot, static)
 
     if "bots" in blocks:
         model.bots = _bot_rows(bots)

@@ -172,7 +172,11 @@ def load_demo_data() -> list[FakeBot]:
 
 
 async def load_live_data() -> list[FakeBot]:
-    await sampler.ensure_static()
+    if await sampler.ensure_static() is None:
+        raise SystemExit(
+            f"静态信息采集超过 {config.stzmd_collect_timeout}s 未完成，"
+            "可放宽 STZMD_COLLECT_TIMEOUT 或稍后重试",
+        )
     # 必须先建立基准，否则首采的 CPU / 磁盘 / 网络都是空的（CPU 会显示 0）
     await sampler.prime()
     await sampler.collect_once()
@@ -219,7 +223,16 @@ async def main() -> None:
     )
     parser.add_argument("--all", action="store_true", help="三种版式各出一份")
     parser.add_argument("--out", default=None, help="输出文件名前缀")
+    parser.add_argument(
+        "--devices",
+        default=None,
+        help="设备性能区只出这些设备，逗号分隔（cpu,mem,disk,net）",
+    )
     args = parser.parse_args()
+
+    if args.devices:
+        config.stzmd_devices = [d.strip() for d in args.devices.split(",") if d.strip()]
+        print(f"设备开关：{config.stzmd_devices}")
 
     bots = load_demo_data() if args.demo else await load_live_data()
     layouts = ["full", "gauge", "perf"] if args.all else [args.layout]

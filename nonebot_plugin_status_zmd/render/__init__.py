@@ -9,6 +9,7 @@ from nonebot import logger
 from nonebot.adapters import Bot as BaseBot
 
 from ..config import config
+from ..sampler import SamplerDataUnavailable
 from ..storage import write_debug_html
 from .backend import RenderBackendError, backend_label, new_page, probe
 from .env import build_html
@@ -22,6 +23,7 @@ WAIT_MARKER_TIMEOUT = 10_000
 __all__ = [
     "RenderBackendError",
     "RenderModel",
+    "SamplerDataUnavailable",
     "backend_label",
     "build_html",
     "build_model",

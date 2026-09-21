@@ -12,7 +12,7 @@ from nonebot_plugin_alconna.uniseg import UniMessage
 
 from .bot_info import ensure_bot_meta
 from .config import config
-from .render import RenderBackendError, render_status_image
+from .render import RenderBackendError, SamplerDataUnavailable, render_status_image
 
 
 def _empty_arg_rule(arg: Message = CommandArg()) -> bool:
@@ -46,6 +46,10 @@ async def _handle_status() -> None:
         image = await render_status_image(bots)
     except RenderBackendError as e:
         logger.error("ZMD 渲染后端不可用：{}", e)
+        await UniMessage(str(e)).send(reply_to=config.stzmd_reply_target)
+        return
+    except SamplerDataUnavailable as e:
+        logger.warning("ZMD 状态数据不可用：{}", e)
         await UniMessage(str(e)).send(reply_to=config.stzmd_reply_target)
         return
     except Exception:  # noqa: BLE001

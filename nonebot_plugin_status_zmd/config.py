@@ -43,6 +43,9 @@ ALL_BLOCKS: tuple[str, ...] = tuple(
     dict.fromkeys(b for blocks in LAYOUT_BLOCKS.values() for b in blocks)
 )
 
+#: 设备性能区可单独开关的设备，列表顺序即图上从上到下的顺序
+DEVICE_NAMES: tuple[str, ...] = ("cpu", "mem", "disk", "net")
+
 
 class ConfigModel(BaseModel):
     # region nonebot 内置
@@ -64,6 +67,7 @@ class ConfigModel(BaseModel):
     # region 版式
     stzmd_layout: LayoutType = "full"
     stzmd_blocks: list[str] = list(ALL_BLOCKS)
+    stzmd_devices: list[str] = list(DEVICE_NAMES)
     stzmd_host_name: str | None = None
     # endregion
 
@@ -86,6 +90,8 @@ class ConfigModel(BaseModel):
     # region 采样
     stzmd_collect_interval: int = 5
     stzmd_history_size: int = 180
+    #: 单次采集/静态信息采集的等待上限（秒），超时就先继续、由下个周期补
+    stzmd_collect_timeout: float = 15.0
     stzmd_proc_len: int = 8
     stzmd_proc_sort_by: ProcSortByType = "cpu"
     stzmd_ignore_parts: list[str] = Field(default_factory=list)
@@ -122,6 +128,19 @@ class ConfigModel(BaseModel):
             raise ValueError("STZMD_BLOCKS 不能为空")
         return blocks
 
+    @field_validator("stzmd_devices")
+    @classmethod
+    def _check_devices(cls, v: list[str]) -> list[str]:
+        valid = set(DEVICE_NAMES)
+        devices = [d.strip().lower() for d in v if d.strip()]
+        if unknown := [d for d in devices if d not in valid]:
+            raise ValueError(
+                f"STZMD_DEVICES 含未知设备 {unknown}，可选值：{list(DEVICE_NAMES)}",
+            )
+        if not devices:
+            raise ValueError("STZMD_DEVICES 不能为空")
+        return devices
+
     @field_validator("stzmd_pic_quality")
     @classmethod
     def _check_quality(cls, v: int) -> int:
@@ -148,6 +167,13 @@ class ConfigModel(BaseModel):
     def _check_interval(cls, v: int) -> int:
         if v <= 0:
             raise ValueError("STZMD_COLLECT_INTERVAL 需为正整数")
+        return v
+
+    @field_validator("stzmd_collect_timeout")
+    @classmethod
+    def _check_collect_timeout(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("STZMD_COLLECT_TIMEOUT 需为正数")
         return v
 
     @field_validator("stzmd_history_size")

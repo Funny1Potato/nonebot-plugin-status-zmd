@@ -6,6 +6,7 @@ import pytest
 
 from nonebot_plugin_status_zmd.config import (
     ALL_BLOCKS,
+    DEVICE_NAMES,
     LAYOUT_BLOCKS,
     ConfigModel,
 )
@@ -56,16 +57,34 @@ def test_enabled_blocks_is_intersection():
         {"stzmd_device_scale_factor": 0},
         {"stzmd_render_timeout": 0},
         {"stzmd_collect_interval": 0},
+        {"stzmd_collect_timeout": 0},
         {"stzmd_history_size": 1},
         {"stzmd_proc_len": 0},
         {"stzmd_gauge_value_max": 0},
         {"stzmd_gauge_cpu_weight": -1},
         {"stzmd_layout": "unknown"},
+        {"stzmd_devices": ["cpu", "gpu"]},
+        {"stzmd_devices": []},
     ],
 )
 def test_invalid_values_rejected(kwargs):
     with pytest.raises(ValueError):
         ConfigModel(**kwargs)
+
+
+def test_devices_default_to_all_in_order():
+    assert ConfigModel().stzmd_devices == ["cpu", "mem", "disk", "net"]
+    assert list(DEVICE_NAMES) == ["cpu", "mem", "disk", "net"]
+
+
+def test_devices_are_normalized_and_ordered():
+    model = ConfigModel(stzmd_devices=[" NET ", "Cpu"])
+    assert model.stzmd_devices == ["net", "cpu"]  # 去掉空白/大小写并保持顺序
+
+
+def test_unknown_device_message_lists_options():
+    with pytest.raises(ValueError, match="未知设备"):
+        ConfigModel(stzmd_devices=["ram"])
 
 
 def test_defaults_are_safe():
@@ -74,6 +93,7 @@ def test_defaults_are_safe():
     assert model.stzmd_layout == "full"
     assert model.stzmd_blocks == list(ALL_BLOCKS)
     assert model.stzmd_gauge_value_max == 325799
+    assert model.stzmd_collect_timeout == 15.0
     assert model.stzmd_gauge_cpu_weight + model.stzmd_gauge_mem_weight == pytest.approx(
         1.0
     )
