@@ -1,29 +1,22 @@
-<!-- markdownlint-disable MD033 MD041 -->
-
 <div align="center">
+    <a href="https://v2.nonebot.dev/store">
+    <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-template/refs/heads/resource/.docs/NoneBotPlugin.svg" width="310" alt="logo"></a>
 
-# NoneBot-Plugin-Status-ZMD
+## ✨ NoneBot-Plugin-Status-zmd ✨
 
-_✨ 以《明日方舟：终末地》电量系统风格展示服务器运行状态的 NoneBot2 插件 ✨_
 
-<img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="python">
-<img src="https://img.shields.io/badge/nonebot-2.5+-red.svg" alt="nonebot">
-<img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license">
+ 以《明日方舟：终末地》协议核心面板风格展示服务器运行状态的 NoneBot2 插件 
+
+<p>
+    <img src="https://img.shields.io/badge/python-3.10+-blue?style=flat-square&logo=python&logoColor=white" alt="python">
+    <img src="https://img.shields.io/badge/nonebot-2.3+-red?style=flat-square" alt="nonebot">
+</p>
 
 </div>
 
 ## 📖 介绍
 
-发一条 `status`，得到一张终末地风格的设备状态图：圆形电量环 + 设备性能走势 + 应用概况 +
-终端链路 + 设备信息表。
-
-两个参考对象：
-
-- **视觉规范**：[zmd-manager](https://github.com/QinAnze/zmd-manager)（终末地管理器）——
-  电量环、配色、点阵底纹、走势柱与切角图标块都沿用它的前端设计
-- **出图思路**：[nonebot-plugin-picstatus](https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus)
-  —— 采集器组织方式与「指令带图」的渲染管线参考了它，渲染后端同样使用
-  [nonebot-plugin-htmlrender](https://github.com/kexue-z/nonebot-plugin-htmlrender)
+发一条 `status`，得到一张协议核心面板风格的设备状态图：圆形电量环 + 设备性能走势 + 应用概况 + 终端链路 + 设备信息表。
 
 ### 📷 效果图
 
@@ -41,35 +34,38 @@ _✨ 以《明日方舟：终末地》电量系统风格展示服务器运行状
 **`STZMD_LAYOUT=perf`** —— 只出设备性能
 
 ![perf](docs/images/perf.png)
-
 </details>
-
-> 效果图是 `tools/preview.py --demo` 用固定假数据出的，不是真机截图。
 
 ## 💿 安装
 
-> **尚未发布到 PyPI**，先按下面的源码方式安装。
+<details open>
+<summary>使用 nb-cli 安装</summary>
+在 nonebot2 项目的根目录下打开命令行, 输入以下指令安装（暂未上架，请先使用包管理器安装）
+
+    nb plugin install nonebot-plugin-status-zmd
+
+</details>
+
+
+<details>
+<summary>使用包管理器安装</summary>
 
 ```bash
-# 把插件装进 bot 的环境，`htmlrender8` extra 见下（htmlrender >= 0.8 需要）
-pip install -e /path/to/nonebot-plugin-status-zmd
+pip install nonebot-plugin-status-zmd
 ```
 
-再把它加进 bot 的 `pyproject.toml`：
+在 `pyproject.toml` 中添加：
 
 ```toml
 [tool.nonebot]
-plugins = [
-    # ...
-    "nonebot_plugin_status_zmd"
-]
+plugins = ["nonebot_plugin_status_zmd"]
 ```
 
-发布到 PyPI 之后即可 `nb plugin install nonebot-plugin-status-zmd`。
+</details>
 
 ### ⚠️ 渲染后端
 
-插件通过 `nonebot-plugin-htmlrender` 拿浏览器页面，**0.6 / 0.7 / 0.8+ 都支持**，
+插件通过 `nonebot-plugin-htmlrender` 渲染页面，**0.6 / 0.7 / 0.8+ 都支持**，
 但从 0.8 起它不再内置浏览器后端，需要额外两步：
 
 ```bash
@@ -89,16 +85,6 @@ playwright install --with-deps chromium
 RENDER={"provider":"playwright","startup":"warmup"}
 ```
 
-> **国内网络**：Chromium 内核走 `cdn.playwright.dev` / `storage.googleapis.com`，
-> 直连容易超时。加一个镜像环境变量即可，命令本身不用改：
->
-> ```bash
-> # Windows (cmd)
-> set "PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright"
-> # Linux / macOS
-> export PLAYWRIGHT_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/playwright
-> ```
->
 > 另外 htmlrender 0.7 起把浏览器目录搬到了 localstore 数据目录（首次启动的日志里
 > 会打印具体路径）。如果出图报 `Executable doesn't exist`，把
 > `PLAYWRIGHT_BROWSERS_PATH` 指到那个目录再装一次即可，例如：
@@ -199,31 +185,12 @@ status
 只是先放行——机器人照常启动，数据由下个采样周期补上；若出图时仍没有数据，会直接回
 一句「状态数据还没准备好」而不是卡住。
 
-## 📝 版本管理
-
-未发布到 PyPI：版本号在 `nonebot_plugin_status_zmd/__init__.py` 的 `__version__`
-里，用 git tag（`vX.Y.Z`）标记，变更记在 [CHANGELOG.md](CHANGELOG.md)。
-
-## 🛠️ 开发
-
-```bash
-pip install -e ".[htmlrender8,dev]"
-
-# 不启动机器人也能看效果（demo 假数据 → HTML；加 --shot 出 PNG）
-python tools/preview.py --demo --all --shot
-# 真实采集数据
-python tools/preview.py --live --shot
-
-ruff check . && pytest
-```
-
-README 里的三张效果图就是 `--demo --all --shot` 的产物。
 
 ## 💡 鸣谢
 
 ### [QinAnze/zmd-manager](https://github.com/QinAnze/zmd-manager)
 
-- 终末地电量系统的视觉规范来源：电量环、配色、点阵底纹、走势柱、切角图标块
+- UI视觉规范参考：电量环、配色、点阵底纹、走势柱、切角图标块
 
 ### [lgc-NB2Dev/nonebot-plugin-picstatus](https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus)
 
