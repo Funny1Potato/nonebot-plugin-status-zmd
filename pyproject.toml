@@ -1,10 +1,10 @@
 [project]
 name = "nonebot-plugin-status-zmd"
 dynamic = ["version"]
-description = "以《明日方舟：终末地》电量系统风格展示机器人所在服务器运行状态的 NoneBot2 插件"
+description = "以《明日方舟：终末地》协议核心面板风格展示机器人所在服务器运行状态的 NoneBot2 插件"
 authors = [{ name = "Funny1Potato" }]
 dependencies = [
-    "nonebot2>=2.5.0",
+    "nonebot2>=2.3.0",
     "nonebot-plugin-apscheduler>=0.5.0",
     "nonebot-plugin-alconna>=0.62.1",
     "nonebot-plugin-uninfo>=0.11.2",
