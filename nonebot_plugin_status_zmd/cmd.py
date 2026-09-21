@@ -22,17 +22,17 @@ def _empty_arg_rule(arg: Message = CommandArg()) -> bool:
 
 def _rule() -> Rule:
     rule = Rule(_empty_arg_rule)
-    if config.zmd_need_at:
+    if config.stzmd_need_at:
         rule &= to_me()
     return rule
 
 
-_cmd, *_alias = config.zmd_command
+_cmd, *_alias = config.stzmd_command
 stat_matcher = on_command(
     _cmd,
     aliases=set(_alias),
     rule=_rule(),
-    permission=SUPERUSER if config.zmd_only_superuser else None,
+    permission=SUPERUSER if config.stzmd_only_superuser else None,
 )
 
 
@@ -46,16 +46,16 @@ async def _handle_status() -> None:
         image = await render_status_image(bots)
     except RenderBackendError as e:
         logger.error("ZMD 渲染后端不可用：{}", e)
-        await UniMessage(str(e)).send(reply_to=config.zmd_reply_target)
+        await UniMessage(str(e)).send(reply_to=config.stzmd_reply_target)
         return
     except Exception:  # noqa: BLE001
         logger.exception("获取终末状态图失败")
         await UniMessage("获取状态图失败，请检查后台输出").send(
-            reply_to=config.zmd_reply_target,
+            reply_to=config.stzmd_reply_target,
         )
         return
 
-    await UniMessage.image(raw=image).send(reply_to=config.zmd_reply_target)
+    await UniMessage.image(raw=image).send(reply_to=config.stzmd_reply_target)
     logger.debug(
         "终末状态图已发送，{} 字节",
         len(image),

@@ -33,15 +33,15 @@ __all__ = [
 
 
 async def _screenshot(html: str) -> bytes:
-    image_format = config.zmd_pic_format
+    image_format = config.stzmd_pic_format
     options: dict[str, Any] = {"full_page": True, "type": image_format}
     if image_format == "jpeg":
-        options["quality"] = config.zmd_pic_quality
+        options["quality"] = config.stzmd_pic_quality
 
-    with anyio.fail_after(config.zmd_render_timeout):
+    with anyio.fail_after(config.stzmd_render_timeout):
         async with new_page(
             viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
-            device_scale_factor=config.zmd_device_scale_factor,
+            device_scale_factor=config.stzmd_device_scale_factor,
             locale="zh-CN",
         ) as page:
             await page.set_content(html, wait_until="load")

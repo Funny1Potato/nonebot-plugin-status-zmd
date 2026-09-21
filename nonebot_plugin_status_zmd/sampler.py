@@ -34,7 +34,7 @@ class Sampler:
     def __init__(self) -> None:
         self._collector = SnapshotCollector()
         self._lock = asyncio.Lock()
-        size = config.zmd_history_size
+        size = config.stzmd_history_size
 
         self.static: StaticInfo | None = None
         self.latest: Snapshot | None = None
@@ -74,14 +74,14 @@ class Sampler:
             for disk in snapshot.disks:
                 series = self.disk_hist.setdefault(
                     disk.mountpoint,
-                    deque(maxlen=config.zmd_history_size),
+                    deque(maxlen=config.stzmd_history_size),
                 )
                 series.append(disk.percent)
 
             for net in snapshot.nets:
                 series = self.net_hist.setdefault(
                     net.name,
-                    deque(maxlen=config.zmd_history_size),
+                    deque(maxlen=config.stzmd_history_size),
                 )
                 series.append(max(net.down_bps, net.up_bps) * 8 / 1e6)
 
@@ -112,7 +112,7 @@ class Sampler:
         scheduler.add_job(
             self._job,
             "interval",
-            seconds=config.zmd_collect_interval,
+            seconds=config.stzmd_collect_interval,
             id="nonebot_plugin_status_zmd_sampler",
             replace_existing=True,
             max_instances=1,
@@ -120,8 +120,8 @@ class Sampler:
         )
         logger.debug(
             "ZMD 采样任务已启动，间隔 {}s，历史窗口 {} 点",
-            config.zmd_collect_interval,
-            config.zmd_history_size,
+            config.stzmd_collect_interval,
+            config.stzmd_history_size,
         )
 
 

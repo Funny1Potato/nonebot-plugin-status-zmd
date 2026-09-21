@@ -6,7 +6,7 @@ from nonebot_plugin_status_zmd.sampler import Sampler
 
 
 async def test_collect_once_fills_history(restore_config):
-    restore_config.zmd_history_size = 3
+    restore_config.stzmd_history_size = 3
     sampler = Sampler()
 
     await sampler.collect_once()
@@ -25,7 +25,7 @@ async def test_collect_once_fills_history(restore_config):
 
 
 async def test_ensure_latest_reuses_snapshot(restore_config):
-    restore_config.zmd_history_size = 5
+    restore_config.stzmd_history_size = 5
     sampler = Sampler()
 
     first = await sampler.ensure_latest()
@@ -37,7 +37,7 @@ async def test_ensure_latest_reuses_snapshot(restore_config):
 
 
 async def test_history_keys_follow_devices(restore_config):
-    restore_config.zmd_history_size = 4
+    restore_config.stzmd_history_size = 4
     sampler = Sampler()
     snapshot = await sampler.collect_once()
 

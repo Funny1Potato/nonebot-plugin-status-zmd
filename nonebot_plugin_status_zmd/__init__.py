@@ -18,10 +18,10 @@ from .utils import find_cjk_font
 
 __version__ = "0.1.0"
 
-usage = f"指令：{' / '.join(config.zmd_command)}"
-if config.zmd_only_superuser:
+usage = f"指令：{' / '.join(config.stzmd_command)}"
+if config.stzmd_only_superuser:
     usage += "\n注意：仅 SUPERUSER 可以使用此指令"
-if config.zmd_need_at:
+if config.stzmd_need_at:
     usage += "\n注意：使用指令时需要 @ 机器人"
 
 __plugin_meta__ = PluginMetadata(
@@ -52,14 +52,14 @@ async def _startup() -> None:
     if skipped := config.skipped_blocks():
         logger.info(
             "ZMD 版式 {} 下这些板块不会渲染：{}",
-            config.zmd_layout,
+            config.stzmd_layout,
             ", ".join(skipped),
         )
 
-    if find_cjk_font() is None and not config.zmd_font_path:
+    if find_cjk_font() is None and not config.stzmd_font_path:
         logger.warning(
             "未探测到系统中文字体，出图里的中文可能显示为方块；"
-            "可用 ZMD_FONT_FAMILY 指定已安装字体，或用 ZMD_FONT_PATH "
+            "可用 STZMD_FONT_FAMILY 指定已安装字体，或用 STZMD_FONT_PATH "
             "指向字体文件",
         )
 

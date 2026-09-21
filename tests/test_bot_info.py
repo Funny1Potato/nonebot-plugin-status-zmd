@@ -150,7 +150,7 @@ async def test_avatar_disabled_by_config(monkeypatch, restore_config):
     async def fake_fetch(url: str):
         pytest.fail("关掉头像开关后不应发起请求")
 
-    restore_config.zmd_show_bot_avatar = False
+    restore_config.stzmd_show_bot_avatar = False
     monkeypatch.setattr(bot_info, "_fetch_avatar", fake_fetch)
     monkeypatch.setattr(bot_info, "get_interface", lambda _bot: None)
 

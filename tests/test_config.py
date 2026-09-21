@@ -18,23 +18,23 @@ def test_layout_blocks_cover_all_blocks():
 
 def test_unknown_block_rejected():
     with pytest.raises(ValueError, match="未知板块"):
-        ConfigModel(zmd_blocks=["header", "nope"])
+        ConfigModel(stzmd_blocks=["header", "nope"])
 
 
 def test_empty_block_list_rejected():
     with pytest.raises(ValueError, match="不能为空"):
-        ConfigModel(zmd_blocks=[])
+        ConfigModel(stzmd_blocks=[])
 
 
 def test_empty_command_rejected():
     with pytest.raises(ValueError, match="至少需要一个指令名"):
-        ConfigModel(zmd_command=["  "])
+        ConfigModel(stzmd_command=["  "])
 
 
 def test_enabled_blocks_respects_layout():
     model = ConfigModel(
-        zmd_layout="perf",
-        zmd_blocks=["header", "gauge", "apps", "bots", "perf", "specs", "footer"],
+        stzmd_layout="perf",
+        stzmd_blocks=["header", "gauge", "apps", "bots", "perf", "specs", "footer"],
     )
     assert "perf" in model.enabled_blocks()
     assert "gauge" not in model.enabled_blocks()
@@ -43,7 +43,7 @@ def test_enabled_blocks_respects_layout():
 
 
 def test_enabled_blocks_is_intersection():
-    model = ConfigModel(zmd_layout="full", zmd_blocks=["header", "gauge"])
+    model = ConfigModel(stzmd_layout="full", stzmd_blocks=["header", "gauge"])
     assert model.enabled_blocks() == {"header", "gauge"}
     assert model.skipped_blocks() == []
 
@@ -51,16 +51,16 @@ def test_enabled_blocks_is_intersection():
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"zmd_pic_quality": 0},
-        {"zmd_pic_quality": 101},
-        {"zmd_device_scale_factor": 0},
-        {"zmd_render_timeout": 0},
-        {"zmd_collect_interval": 0},
-        {"zmd_history_size": 1},
-        {"zmd_proc_len": 0},
-        {"zmd_gauge_value_max": 0},
-        {"zmd_gauge_cpu_weight": -1},
-        {"zmd_layout": "unknown"},
+        {"stzmd_pic_quality": 0},
+        {"stzmd_pic_quality": 101},
+        {"stzmd_device_scale_factor": 0},
+        {"stzmd_render_timeout": 0},
+        {"stzmd_collect_interval": 0},
+        {"stzmd_history_size": 1},
+        {"stzmd_proc_len": 0},
+        {"stzmd_gauge_value_max": 0},
+        {"stzmd_gauge_cpu_weight": -1},
+        {"stzmd_layout": "unknown"},
     ],
 )
 def test_invalid_values_rejected(kwargs):
@@ -70,8 +70,10 @@ def test_invalid_values_rejected(kwargs):
 
 def test_defaults_are_safe():
     model = ConfigModel()
-    assert model.zmd_only_superuser is True
-    assert model.zmd_layout == "full"
-    assert model.zmd_blocks == list(ALL_BLOCKS)
-    assert model.zmd_gauge_value_max == 325799
-    assert model.zmd_gauge_cpu_weight + model.zmd_gauge_mem_weight == pytest.approx(1.0)
+    assert model.stzmd_only_superuser is True
+    assert model.stzmd_layout == "full"
+    assert model.stzmd_blocks == list(ALL_BLOCKS)
+    assert model.stzmd_gauge_value_max == 325799
+    assert model.stzmd_gauge_cpu_weight + model.stzmd_gauge_mem_weight == pytest.approx(
+        1.0
+    )

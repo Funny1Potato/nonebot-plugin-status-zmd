@@ -187,7 +187,7 @@ async def build_one(
     shot: bool,
     open_it: bool,
 ) -> None:
-    config.zmd_layout = layout  # type: ignore[assignment]
+    config.stzmd_layout = layout  # type: ignore[assignment]
     model = await build_model(bots, want_gauge="gauge" in config.enabled_blocks())
     html = await build_html(model)
     out.write_text(html, encoding="u8")

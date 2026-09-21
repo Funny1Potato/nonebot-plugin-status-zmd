@@ -34,11 +34,11 @@ async def load_css() -> str:
 
 
 async def load_extra_css() -> str | None:
-    path = config.zmd_extra_css
+    path = config.stzmd_extra_css
     if path is None:
         return None
     if not await anyio.Path(path).is_file():
-        logger.warning("ZMD_EXTRA_CSS 指向的文件不存在：{}", path)
+        logger.warning("STZMD_EXTRA_CSS 指向的文件不存在：{}", path)
         return None
     return await anyio.Path(path).read_text(encoding="u8")
 
@@ -46,18 +46,18 @@ async def load_extra_css() -> str | None:
 def build_font_css() -> str | None:
     """把自定义字体配置翻译成一段 CSS（@font-face + 覆盖 --font）。"""
     blocks: list[str] = []
-    family = config.zmd_font_family
+    family = config.stzmd_font_family
 
-    if path := config.zmd_font_path:
+    if path := config.stzmd_font_path:
         try:
             size = path.stat().st_size
         except OSError:
-            logger.warning("ZMD_FONT_PATH 不可读：{}", path)
+            logger.warning("STZMD_FONT_PATH 不可读：{}", path)
         else:
             if size > MAX_FONT_BYTES:
                 logger.warning(
-                    "ZMD_FONT_PATH 文件过大（{}），已跳过内联；"
-                    "请改用 ZMD_FONT_FAMILY 指定系统已安装的字体",
+                    "STZMD_FONT_PATH 文件过大（{}），已跳过内联；"
+                    "请改用 STZMD_FONT_FAMILY 指定系统已安装的字体",
                     path,
                 )
             elif uri := file_to_data_uri(path):

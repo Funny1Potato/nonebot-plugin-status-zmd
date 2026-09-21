@@ -192,7 +192,7 @@ def _addresses() -> list[str]:
     except Exception:
         return result
     for name, entries in sorted(addrs.items()):
-        if match_any(config.zmd_ignore_nets, name):
+        if match_any(config.stzmd_ignore_nets, name):
             continue
         for entry in entries:
             # psutil 里没有 AF_INET 常量，family 就是 socket.AddressFamily
@@ -391,8 +391,8 @@ def _collect_disks(
         return result
 
     for part in partitions:
-        if match_any(config.zmd_ignore_parts, part.mountpoint) or match_any(
-            config.zmd_ignore_parts,
+        if match_any(config.stzmd_ignore_parts, part.mountpoint) or match_any(
+            config.stzmd_ignore_parts,
             part.device,
         ):
             continue
@@ -436,7 +436,7 @@ def _collect_nets(
         stats = {}
 
     for name, counter in sorted(counters.items()):
-        if match_any(config.zmd_ignore_nets, name):
+        if match_any(config.stzmd_ignore_nets, name):
             continue
         down, up = net_rates.get(name, (0.0, 0.0))
         speed = getattr(stats.get(name), "speed", 0) or None
@@ -454,7 +454,7 @@ def _collect_nets(
 
 
 def _collect_procs(logical_cpu: int | None) -> list[ProcStat]:
-    divisor = logical_cpu if logical_cpu and not config.zmd_proc_cpu_max_100p else 1
+    divisor = logical_cpu if logical_cpu and not config.stzmd_proc_cpu_max_100p else 1
     procs: list[ProcStat] = []
     for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_info"]):
         try:
@@ -463,7 +463,7 @@ def _collect_procs(logical_cpu: int | None) -> list[ProcStat]:
             name = str(info.get("name") or "")
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
-        if not pid or match_any(config.zmd_ignore_procs, name):
+        if not pid or match_any(config.stzmd_ignore_procs, name):
             continue
         mem_info = info.get("memory_info")
         rss = getattr(mem_info, "rss", 0) or 0
@@ -476,9 +476,9 @@ def _collect_procs(logical_cpu: int | None) -> list[ProcStat]:
             ),
         )
 
-    key = (lambda p: p.mem) if config.zmd_proc_sort_by == "mem" else (lambda p: p.cpu)
+    key = (lambda p: p.mem) if config.stzmd_proc_sort_by == "mem" else (lambda p: p.cpu)
     procs.sort(key=key, reverse=True)
-    return procs[: config.zmd_proc_len]
+    return procs[: config.stzmd_proc_len]
 
 
 class SnapshotCollector:

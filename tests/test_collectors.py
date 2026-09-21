@@ -156,8 +156,8 @@ def test_snapshot_collector_smoke():
 
 
 def test_procs_respect_limits_and_order(restore_config):
-    restore_config.zmd_proc_len = 3
-    restore_config.zmd_proc_sort_by = "mem"
+    restore_config.stzmd_proc_len = 3
+    restore_config.stzmd_proc_sort_by = "mem"
     procs = _collect_procs(os.cpu_count() or 1)
     assert len(procs) <= 3
     assert procs == sorted(procs, key=lambda p: p.mem, reverse=True)
@@ -165,14 +165,14 @@ def test_procs_respect_limits_and_order(restore_config):
 
 
 def test_procs_ignore_pattern(restore_config):
-    restore_config.zmd_proc_len = 64
-    restore_config.zmd_proc_sort_by = "cpu"
+    restore_config.stzmd_proc_len = 64
+    restore_config.stzmd_proc_sort_by = "cpu"
     # 进程名不可能以这个前缀开头，结果应该和不过滤相比只是少一些
-    restore_config.zmd_ignore_procs = [r"^zmd-definitely-not-a-real-process$"]
+    restore_config.stzmd_ignore_procs = [r"^zmd-definitely-not-a-real-process$"]
     procs = _collect_procs(os.cpu_count() or 1)
     assert all(
         not p.name.startswith("zmd-definitely-not-a-real-process") for p in procs
     )
 
-    restore_config.zmd_ignore_procs = [r"."]
+    restore_config.stzmd_ignore_procs = [r"."]
     assert _collect_procs(os.cpu_count() or 1) == []

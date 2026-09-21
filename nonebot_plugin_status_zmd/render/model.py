@@ -286,7 +286,8 @@ def _spec_rows(
         ("连接 Bot", f"{bot_count} 个"),
         (
             "采样",
-            f"每 {config.zmd_collect_interval}s · 最近 {config.zmd_history_size} 点",
+            f"每 {config.stzmd_collect_interval}s"
+            f" · 最近 {config.stzmd_history_size} 点",
         ),
         ("渲染后端", backend_label()),
         ("缓存目录", str(cache_dir())),
@@ -310,21 +311,21 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
     static = await sampler.ensure_static()
     snapshot = await sampler.ensure_latest()
     blocks = config.enabled_blocks()
-    layout = config.zmd_layout
+    layout = config.stzmd_layout
 
     model = RenderModel(
         generated_at=datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S"),
         layout=layout,
         blocks=blocks,
-        host_name=first_str(config.zmd_host_name, static.hostname),
+        host_name=first_str(config.stzmd_host_name, static.hostname),
         system=static.system,
         backend=backend_label(),
         sample_desc=(
-            f"每 {config.zmd_collect_interval}s 采样"
-            f" · 窗口 {config.zmd_history_size} 点"
+            f"每 {config.stzmd_collect_interval}s 采样"
+            f" · 窗口 {config.stzmd_history_size} 点"
         ),
-        slots=config.zmd_history_size,
-        proc_sort_by=config.zmd_proc_sort_by,
+        slots=config.stzmd_history_size,
+        proc_sort_by=config.stzmd_proc_sort_by,
         source_ok=sampler.last_error is None,
         source_text="实时" if sampler.last_error is None else "采样异常",
     )
@@ -336,7 +337,8 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
 
         def compose(cpu: float, mem: float) -> float:
             return clamp(
-                cpu * config.zmd_gauge_cpu_weight + mem * config.zmd_gauge_mem_weight,
+                cpu * config.stzmd_gauge_cpu_weight
+                + mem * config.stzmd_gauge_mem_weight,
                 0.0,
                 100.0,
             )
@@ -346,13 +348,13 @@ async def build_model(bots: list[BaseBot], *, want_gauge: bool) -> RenderModel:
             compose(cpu, mem)
             for cpu, mem in zip(sampler.cpu_hist, sampler.mem_hist, strict=False)
         ] or [percent]
-        scale = config.zmd_gauge_value_max / 100
+        scale = config.stzmd_gauge_value_max / 100
 
         model.gauge = GaugeView(
             percent=percent,
             value=round(percent * scale),
             value_peak=round(max(window) * scale),
-            value_max=int(config.zmd_gauge_value_max),
+            value_max=int(config.stzmd_gauge_value_max),
             cpu=cpu_percent,
             mem=snapshot.mem.percent,
             uptime=format_duration(nonebot_uptime()),

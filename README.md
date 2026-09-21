@@ -92,7 +92,7 @@ status
 系统状态
 ```
 
-指令名可用 `ZMD_COMMAND` 修改。默认**仅 SUPERUSER**可用（状态图含主机名、IP、
+指令名可用 `STZMD_COMMAND` 修改。默认**仅 SUPERUSER**可用（状态图含主机名、IP、
 进程、磁盘等信息，不适合公开）。
 
 > NoneBot 默认只把 `/` 开头的消息当命令，想直接发 `status` 触发，需要把空字符串
@@ -110,18 +110,18 @@ status
 
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `ZMD_LAYOUT` | `full` | `full` 综合长图 / `gauge` 只出电量环 / `perf` 只出设备性能 |
-| `ZMD_BLOCKS` | 全部 | 板块开关：`header` `gauge` `apps` `bots` `perf` `specs` `footer` |
-| `ZMD_ONLY_SUPERUSER` | `true` | 是否仅 SUPERUSER 可用 |
-| `ZMD_COLLECT_INTERVAL` | `5` | 后台采样间隔（秒） |
-| `ZMD_HISTORY_SIZE` | `180` | 走势图保留的采样点数（窗口 = 间隔 × 点数） |
-| `ZMD_GAUGE_VALUE_MAX` | `325799` | 电量环分母（终末地的游戏口径） |
-| `ZMD_FONT_FAMILY` | 空 | 指定 CSS 字体栈，例如 `"Noto Sans CJK SC"` |
-| `ZMD_FONT_PATH` | 空 | 指定字体文件并内联进图片（≤ 8MB），保证字形一致 |
+| `STZMD_LAYOUT` | `full` | `full` 综合长图 / `gauge` 只出电量环 / `perf` 只出设备性能 |
+| `STZMD_BLOCKS` | 全部 | 板块开关：`header` `gauge` `apps` `bots` `perf` `specs` `footer` |
+| `STZMD_ONLY_SUPERUSER` | `true` | 是否仅 SUPERUSER 可用 |
+| `STZMD_COLLECT_INTERVAL` | `5` | 后台采样间隔（秒） |
+| `STZMD_HISTORY_SIZE` | `180` | 走势图保留的采样点数（窗口 = 间隔 × 点数） |
+| `STZMD_GAUGE_VALUE_MAX` | `325799` | 电量环分母（终末地的游戏口径） |
+| `STZMD_FONT_FAMILY` | 空 | 指定 CSS 字体栈，例如 `"Noto Sans CJK SC"` |
+| `STZMD_FONT_PATH` | 空 | 指定字体文件并内联进图片（≤ 8MB），保证字形一致 |
 
 ### 版式与板块的关系
 
-`ZMD_LAYOUT` 决定整体容器结构，`ZMD_BLOCKS` 决定渲染哪些板块，只有两者都允许的
+`STZMD_LAYOUT` 决定整体容器结构，`STZMD_BLOCKS` 决定渲染哪些板块，只有两者都允许的
 板块才会出现：
 
 | 版式 | 允许的板块 |
@@ -135,15 +135,15 @@ status
 - **采集**：全部走 `psutil`，跨平台；所有阻塞调用都丢进线程池，不卡事件循环。
 - **不含 GPU**：显卡指标跨平台差异太大，本插件不采集，设备性能区只有
   处理器 / 内存 / 磁盘 / 网络。
-- **电量环**：`综合占用 = CPU × ZMD_GAUGE_CPU_WEIGHT + 内存 × ZMD_GAUGE_MEM_WEIGHT`，
-  映射到 `0-360°` 扫角；中间大数字 = `综合占用 / 100 × ZMD_GAUGE_VALUE_MAX`（游戏口径），
+- **电量环**：`综合占用 = CPU × STZMD_GAUGE_CPU_WEIGHT + 内存 × STZMD_GAUGE_MEM_WEIGHT`，
+  映射到 `0-360°` 扫角；中间大数字 = `综合占用 / 100 × STZMD_GAUGE_VALUE_MAX`（游戏口径），
   「实际占用」为当前值，「最大占用」为历史窗口内的峰值。
 - **走势柱**：处理器/内存/磁盘容量按百分比，网络按链路占用百分比（拿不到链路速率时
   按窗口内峰值归一）。
 - **磁盘读写**：`psutil` 的物理盘计数器差分。单物理盘机器上所有分区共用同一份速率；
   多盘且无法对应到物理盘时显示 `—`（不猜）。
-- **进程列表**：只按 `ZMD_IGNORE_PROCS` 和 pid 过滤，不做「占用太小就丢弃」的过滤，
-  排序后取前 `ZMD_PROC_LEN` 个；CPU 默认折算成整机占比（`ZMD_PROC_CPU_MAX_100P=true`
+- **进程列表**：只按 `STZMD_IGNORE_PROCS` 和 pid 过滤，不做「占用太小就丢弃」的过滤，
+  排序后取前 `STZMD_PROC_LEN` 个；CPU 默认折算成整机占比（`STZMD_PROC_CPU_MAX_100P=true`
   可改成单核口径）。
 - **磁盘型号**：Linux 读 `/sys/block/*/device/model`；Windows/macOS 拿不到（不引入
   WMI），显示 `—`。

@@ -96,7 +96,7 @@ def _count_add(counter: dict[_K, int | None], key: _K, value: int = 1) -> None:
 # region hooks
 
 
-if config.zmd_count_message_sent:
+if config.stzmd_count_message_sent:
 
     @BaseBot.on_called_api
     async def _count_send_by_api(
@@ -122,11 +122,11 @@ async def _count_message(bot: BaseBot, event: BaseEvent) -> None:
     event_type = event.get_type()
     if event_type == "message":
         if event.get_user_id() == bot.self_id:
-            if config.zmd_count_message_sent:
+            if config.stzmd_count_message_sent:
                 _count_add(send_num, bot.self_id)
         else:
             _count_add(recv_num, bot.self_id)
-    elif event_type == "message_sent" and config.zmd_count_message_sent:
+    elif event_type == "message_sent" and config.stzmd_count_message_sent:
         _count_add(send_num, bot.self_id)
 
 
@@ -137,7 +137,7 @@ async def _fetch_avatar(url: str) -> bytes | None:
     try:
         async with httpx.AsyncClient(
             proxy=config.proxy,
-            timeout=config.zmd_req_timeout,
+            timeout=config.stzmd_req_timeout,
             follow_redirects=True,
         ) as client:
             resp = await client.get(url)
@@ -159,7 +159,7 @@ async def _load_bot_meta(bot: BaseBot) -> None:
         return
     _meta_attempted[bot.self_id] = now
 
-    show_avatar = config.zmd_show_bot_avatar
+    show_avatar = config.stzmd_show_bot_avatar
     nickname: str | None = None
     raw: bytes | None = None
 
@@ -220,7 +220,7 @@ async def _on_connect(bot: BaseBot) -> None:
 @driver.on_bot_disconnect
 async def _on_disconnect(bot: BaseBot) -> None:
     bot_connect_time.pop(bot.self_id, None)
-    if config.zmd_disconnect_reset_counter:
+    if config.stzmd_disconnect_reset_counter:
         recv_num.pop(bot.self_id, None)
         send_num.pop(bot.self_id, None)
 
