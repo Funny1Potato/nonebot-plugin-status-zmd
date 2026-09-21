@@ -44,11 +44,17 @@ from nonebot_plugin_status_zmd.render import (  # noqa: E402
     build_model,
     render_model,
 )
+from nonebot_plugin_status_zmd.render import model as model_module  # noqa: E402
 from nonebot_plugin_status_zmd.sampler import sampler  # noqa: E402
 
 HISTORY = 180
 GIB = 1024**3
 MIB = 1024**2
+
+#: demo 出图用的假缓存目录：预览不跑在插件加载上下文里，规格表里原本会出现
+#: 本机临时目录（带真实用户名），宣传图不想露出来
+DEMO_LOCALAPPDATA = Path(r"C:\Users\example\AppData\Local")
+DEMO_CACHE_DIR = DEMO_LOCALAPPDATA / "nonebot2" / "cache" / "nonebot_plugin_status_zmd"
 
 DEMO_PROCS = (
     ("msedge.exe", 16.4, 2840 * MIB),
@@ -88,6 +94,9 @@ def load_demo_data() -> list[FakeBot]:
     rng = random.Random(20260921)
     cpu_percent = 34.2
     mem_percent = 61.3
+
+    # 规格表里的缓存目录换成假路径（model 里是按名字导入的，改它自己的引用即可）
+    model_module.cache_dir = lambda: DEMO_CACHE_DIR
 
     sampler.static = StaticInfo(
         system="Windows 11 Pro AMD64",
