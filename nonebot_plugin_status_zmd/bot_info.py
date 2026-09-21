@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -43,6 +44,10 @@ class BotStatus:
 
 
 _bot_meta: dict[str, tuple[str | None, str | None]] = {}
+#: 上次尝试拉取 Bot 信息的时间（monotonic）
+_meta_attempted: dict[str, float] = {}
+#: 拉取失败后的重试间隔（秒）
+META_RETRY_INTERVAL = 600.0
 
 #: 各适配器用于发送消息的 API 名。逐一列举才能准确判断「这条 API 调用是不是发消息」
 SEND_APIS: dict[str, list[str] | Callable[[str], bool]] = {
@@ -146,6 +151,13 @@ async def _load_bot_meta(bot: BaseBot) -> None:
     if bot.self_id in _bot_meta:
         return
 
+    # 取失败时不写缓存，这里给个重试间隔，避免每条指令都白等一次 API 超时
+    now = time.monotonic()
+    last_attempt = _meta_attempted.get(bot.self_id, 0.0)
+    if now - last_attempt < META_RETRY_INTERVAL:
+        return
+    _meta_attempted[bot.self_id] = now
+
     nickname: str | None = None
     avatar: str | None = None
     try:
@@ -173,7 +185,9 @@ async def _load_bot_meta(bot: BaseBot) -> None:
             f"https://q.qlogo.cn/headimg_dl?dst_uin={bot.self_id}&spec=160",
         )
 
-    _bot_meta[bot.self_id] = (nickname, avatar)
+    if user is not None or avatar is not None:
+        # 真的拿到了结果才缓存；什么都没拿到留给下次重试
+        _bot_meta[bot.self_id] = (nickname, avatar)
 
 
 async def ensure_bot_meta(bots: list[BaseBot] | None = None) -> None:
