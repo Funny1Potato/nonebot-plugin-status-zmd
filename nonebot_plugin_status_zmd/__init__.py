@@ -25,8 +25,8 @@ if config.stzmd_need_at:
     usage += "\n注意：使用指令时需要 @ 机器人"
 
 __plugin_meta__ = PluginMetadata(
-    name="ZMD-Status",
-    description="以《明日方舟：终末地》电量系统风格展示机器人所在服务器的运行状态",
+    name="Status-Zmd",
+    description="以《明日方舟：终末地》协议核心面板风格展示机器人所在服务器的运行状态",
     usage=usage,
     type="application",
     homepage="https://github.com/Funny1Potato/nonebot-plugin-status-zmd",
