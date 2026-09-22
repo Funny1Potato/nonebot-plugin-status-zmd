@@ -43,12 +43,42 @@ AUDIT_JS = """() => {
       return el ? getComputedStyle(el).minHeight : null;
     })(),
     ringStroke: getComputedStyle(document.querySelector('path[stroke="#ffe23d"]')).stroke,
+    discFill: getComputedStyle(document.querySelector('circle[fill="#ededea"]')).fill,
+    centerText: ['of', 'uptime', 'uptime-sub'].reduce((acc, cls) => {
+      const el = document.querySelector('.gauge-center .' + cls);
+      acc[cls] = el ? getComputedStyle(el).color : null;
+      return acc;
+    }, {}),
     iconClass: document.querySelector('.svg-ic') ? 'svg-ic' : null,
     oldIconClass: document.querySelector('svg.ic') ? 'svg.ic' : null,
     overflow,
     scroll,
   };
 }"""
+
+
+def _channel(value: float) -> float:
+    c = value / 255
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def contrast_ratio(foreground: str, background: str) -> float:
+    """WCAG 对比度，入参形如 ``rgb(99, 99, 93)`` 或 ``#63635d``。"""
+
+    def luminance(color: str) -> float:
+        if color.startswith("#"):
+            rgb = [int(color[i : i + 2], 16) for i in (1, 3, 5)]
+        else:
+            inner = color[color.index("(") + 1 : color.index(")")]
+            rgb = [float(p) for p in inner.split(",")[:3]]
+        return (
+            0.2126 * _channel(rgb[0])
+            + 0.7152 * _channel(rgb[1])
+            + 0.0722 * _channel(rgb[2])
+        )
+
+    first, second = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (first + 0.05) / (second + 0.05)
 
 
 async def audit(model, render_guard) -> dict:
@@ -126,6 +156,21 @@ async def test_perf_chart_geometry(render_guard):
     assert report["firstRowBars"] == 3  # make_perf 只给了 3 个历史点
     assert report["chart"][3] == 66  # .chart-cell 固定 66px
     assert report["chart"][2] > 400
+
+
+@pytest.mark.render
+async def test_gauge_center_text_contrast(render_guard):
+    """中心文字压在粒子点云上，颜色要够深：对圆盘底色的 WCAG 对比度不低于 4.5。
+
+    点云本身比圆盘略深，所以这里对圆盘测出来的余量就是点云上的余量。
+    """
+    report = await audit(full_model(), render_guard)
+    for cls, color in report["centerText"].items():
+        assert color, cls
+        ratio = contrast_ratio(color, report["discFill"])
+        assert ratio >= 4.5, (
+            f"{cls} 对比度 {ratio:.2f} 偏低（{color} on {report['discFill']}）"
+        )
 
 
 @pytest.mark.render

@@ -344,19 +344,19 @@ body {
 }
 
 .of {
-  color: var(--txt-dim);
+  color: #63635d;
   font-size: 14px;
 }
 
 .uptime {
   margin-top: 12px;
-  color: #5a5a55;
+  color: #4a4a45;
   font-size: 16px;
   letter-spacing: 2px;
 }
 
 .uptime-sub {
-  color: var(--txt-dim);
+  color: #63635d;
   font-size: 11px;
   letter-spacing: 3px;
 }

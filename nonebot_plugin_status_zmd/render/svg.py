@@ -20,6 +20,8 @@ DISC_COLOR = "#ededea"
 RING_BACK_COLOR = "#d3d3ce"
 RING_TRACK_COLOR = "#f2edc4"
 RING_PROGRESS_COLOR = "#ffe23d"
+#: 点云要压得住但不能压住中心文字，所以取浅灰；改深会直接影响中间数字与运行时间的可读性
+BLOB_DOT_COLOR = "#a8a8a1"
 
 #: 装饰弧角度区间（0° 指 12 点方向，顺时针为正）
 ARC_LEFT = (270.0, 360.0)
@@ -157,7 +159,7 @@ def blob_svg(*, seed: int = 7, phase_t: float = 0.0, rotation: float = 0.35) -> 
             f'<circle cx="{center + rot_x * radius:.1f}" '
             f'cy="{center + y * radius:.1f}" '
             f'r="{0.7 + depth * 1.2:.2f}" '
-            f'fill="#60605c" fill-opacity="{0.10 + depth * 0.40:.2f}"/>',
+            f'fill="{BLOB_DOT_COLOR}" fill-opacity="{0.10 + depth * 0.40:.2f}"/>',
         )
 
     return (

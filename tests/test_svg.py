@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from nonebot_plugin_status_zmd.render.svg import (
+    BLOB_DOT_COLOR,
     BLOB_POINTS,
     CX,
     CY,
@@ -68,6 +69,13 @@ def test_blob_is_reproducible_and_bounded():
         assert 0 <= y <= 290
         assert 0.7 <= radius <= 1.9
         assert math.hypot(x - center, y - center) <= 130
+
+
+def test_blob_dots_stay_light():
+    """点云铺在中心文字底下，颜色必须留在浅色区间（太深会糊住数字与运行时间）。"""
+    r, g, b = (int(BLOB_DOT_COLOR[i : i + 2], 16) for i in (1, 3, 5))
+    assert (r + g + b) / 3 >= 160
+    assert f'fill="{BLOB_DOT_COLOR}"' in blob_svg()
 
 
 def test_gauge_svg_contents():
