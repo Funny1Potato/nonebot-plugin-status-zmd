@@ -88,3 +88,36 @@ jobs:
         # 改用 API token 时：去掉上面的 id-token 权限，并改成
         # with:
         #   password: ${{ secrets.PYPI_API_TOKEN }}
+
+  release:
+    name: 发 Release
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 建 Release 需要写权限
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 从 CHANGELOG 取该版本说明
+        run: |
+          python - <<'PY'
+          import os, pathlib, re
+
+          ver = os.environ["TAG"].lstrip("v")
+          changelog = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          head = re.search(rf"^##\s+v?{re.escape(ver)}\s*$", changelog, re.MULTILINE)
+          if not head:
+              raise SystemExit(f"CHANGELOG.md 里没有 v{ver} 这一节")
+          rest = changelog[head.end():]
+          nxt = re.search(r"^##\s+\S", rest, re.MULTILINE)
+          section = (rest[: nxt.start()] if nxt else rest).strip()
+          pathlib.Path("notes.md").write_text(section + "\n", encoding="utf-8")
+          print(section)
+          PY
+
+      - name: 创建 Release
+        run: gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag

@@ -39,7 +39,7 @@
 
 <details open>
 <summary>使用 nb-cli 安装</summary>
-在 nonebot2 项目的根目录下打开命令行, 输入以下指令安装
+在 nonebot2 项目的根目录下打开命令行, 输入以下指令安装（暂未上架，请先使用包管理器安装）
 
     nb plugin install nonebot-plugin-status-zmd
 
