@@ -47,6 +47,10 @@ path = "nonebot_plugin_status_zmd/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["nonebot_plugin_status_zmd"]
 
+[tool.hatch.build.targets.sdist]
+# docs/ 只是 README 用的效果图，装包不需要
+exclude = ["docs"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py310"

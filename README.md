@@ -24,15 +24,15 @@
 
 **`STZMD_LAYOUT=full`** —— 综合长图（默认）
 
-![full](docs/images/full.png)
+![full](https://raw.githubusercontent.com/Funny1Potato/nonebot-plugin-status-zmd/main/docs/images/full.png)
 
 **`STZMD_LAYOUT=gauge`** —— 只出电量环
 
-![gauge](docs/images/gauge.png)
+![gauge](https://raw.githubusercontent.com/Funny1Potato/nonebot-plugin-status-zmd/main/docs/images/gauge.png)
 
 **`STZMD_LAYOUT=perf`** —— 只出设备性能
 
-![perf](docs/images/perf.png)
+![perf](https://raw.githubusercontent.com/Funny1Potato/nonebot-plugin-status-zmd/main/docs/images/perf.png)
 </details>
 
 ## 💿 安装
