@@ -13,3 +13,6 @@ debug/
 preview*.html
 preview*.png
 preview*.jpeg
+# 本地开发用，不进仓库、不进 sdist
+tools/
+tests/
