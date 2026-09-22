@@ -63,8 +63,9 @@ plugins = ["nonebot_plugin_status_zmd"]
 
 </details>
 
-> 需要 **nonebot2 >= 2.3.0**。2.3 上依赖会解析到偏低的一套（`alconna 0.59` /
-> `uninfo 0.6` / `htmlrender 0.6.3`），2.5 上则是最新的一套，两套都已实测。
+> 需要 **nonebot2 >= 2.3.0**。在 2.3 上 pip 会装 `alconna 0.59` / `uninfo 0.6` /
+> `htmlrender 0.6.3`（它们的更新版本要求 nonebot2 >= 2.5）；插件声明的下限还要更低
+> （见 `pyproject.toml`），那套最低版本组合也已实测。
 
 ### ⚠️ 渲染后端
 

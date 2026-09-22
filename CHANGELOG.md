@@ -16,8 +16,11 @@
 - 常驻周期采样 + 历史窗口，走势图按窗口渲染
 - NoneBot 自身状态：运行时长、Bot 连接时长、收发计数、Bot 列表与头像
 - `nonebot-plugin-htmlrender` 0.6 / 0.7 / 0.8+ 三版本兼容层
-- 支持 nonebot2 2.3.0 及以上：2.3 上会解析到 `alconna 0.59` / `uninfo 0.6` /
-  `htmlrender 0.6.3`（这三个依赖自某个版本起要求 nonebot2 >= 2.5.0），
-  已用 2.3.0 那一套依赖跑通全部测试与出图
+- 支持 nonebot2 2.3.0 及以上，依赖下限压到各自最早可用版本：`apscheduler 0.4.0`、
+  `alconna 0.37.0`、`uninfo 0.2.0`、`htmlrender 0.3.3`、`localstore 0.7.1`、
+  `psutil 5.9.0`、`py-cpuinfo 8.0.0`、`jinja2 3.0.3`、`anyio 3.4.0`、`httpx 0.26.0`
+  - `apscheduler < 0.4.0`、`alconna < 0.37.0` 仍在用 pydantic v1 的 `BaseSettings` /
+    `Undefined`，在 nonebot2 2.3（pydantic v2）下导入即失败，故不能更低
+  - 已实测：nonebot2 2.3.0 + 上述最低版本组合跑通全部测试与出图；2.5 那套同样全过
 - 缓存走 `nonebot-plugin-localstore`（Bot 头像、渲染失败的 HTML）
 - `tools/preview.py` 预览工具：不启动机器人即可出 HTML / PNG
