@@ -204,11 +204,11 @@ STZMD_REQ_TIMEOUT=10                       # 拉取头像 / Bot 信息的超时�
 
 ### [QinAnze/zmd-manager](https://github.com/QinAnze/zmd-manager)
 
-- UI视觉规范参考：电量环、配色、点阵底纹、走势柱、切角图标块
+- 视觉效果实现参考
 
 ### [lgc-NB2Dev/nonebot-plugin-picstatus](https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus)
 
-- 采集器组织方式、渲染管线与「指令带图」的整体思路
+- 采集器组织方式、渲染管线等构建参考
 
 ### [kexue-z/nonebot-plugin-htmlrender](https://github.com/kexue-z/nonebot-plugin-htmlrender)
 
