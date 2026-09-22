@@ -2,10 +2,9 @@
     <a href="https://v2.nonebot.dev/store">
     <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-template/refs/heads/resource/.docs/NoneBotPlugin.svg" width="310" alt="logo"></a>
 
-## ✨ NoneBot-Plugin-Status-zmd ✨
+## ✨ NoneBot-Plugin-Status-Zmd ✨
 
-
- 以《明日方舟：终末地》协议核心面板风格展示服务器运行状态的 NoneBot2 插件 
+以《明日方舟：终末地》协议核心面板风格展示服务器运行状态的 NoneBot2 插件 
 
 <p>
     <img src="https://img.shields.io/badge/python-3.10+-blue?style=flat-square&logo=python&logoColor=white" alt="python">
@@ -63,10 +62,6 @@ plugins = ["nonebot_plugin_status_zmd"]
 
 </details>
 
-> 需要 **nonebot2 >= 2.3.0**。在 2.3 上 pip 会装 `alconna 0.59` / `uninfo 0.6` /
-> `htmlrender 0.6.3`（它们的更新版本要求 nonebot2 >= 2.5）；插件声明的下限还要更低
-> （见 `pyproject.toml`），那套最低版本组合也已实测。
-
 ### ⚠️ 渲染后端
 
 插件通过 `nonebot-plugin-htmlrender` 渲染页面，**0.6 / 0.7 / 0.8+ 都支持**，
@@ -89,17 +84,13 @@ playwright install --with-deps chromium
 RENDER={"provider":"playwright","startup":"warmup"}
 ```
 
-> 另外 htmlrender 0.7 起把浏览器目录搬到了 localstore 数据目录（首次启动的日志里
-> 会打印具体路径）。如果出图报 `Executable doesn't exist`，把
-> `PLAYWRIGHT_BROWSERS_PATH` 指到那个目录再装一次即可，例如：
->
+> 另外 htmlrender 0.7 起把浏览器目录搬到了 localstore 数据目录（首次启动的日志里会打印具体路径）。如果出图报 `Executable doesn't exist`，把`PLAYWRIGHT_BROWSERS_PATH` 指到那个目录再装一次即可，例如：
 > ```bash
 > set "PLAYWRIGHT_BROWSERS_PATH=%LOCALAPPDATA%\nonebot2\nonebot_plugin_htmlrender"
 > playwright install chromium
 > ```
 
-后端不可用时插件**不会**启动失败，而是打印一条带修复步骤的告警，并在指令触发时
-把同样的提示发给使用者。
+后端不可用时插件**不会**启动失败，而是打印一条带修复步骤的告警，并在指令触发时把同样的提示发给使用者。
 
 ## 🎉 使用
 
@@ -108,11 +99,9 @@ status
 系统状态
 ```
 
-指令名可用 `STZMD_COMMAND` 修改。默认**仅 SUPERUSER**可用（状态图含主机名、IP、
-进程、磁盘等信息，不适合公开）。
+指令名可用 `STZMD_COMMAND` 修改。默认**仅 SUPERUSER**可用。
 
-> NoneBot 默认只把 `/` 开头的消息当命令，想直接发 `status` 触发，需要把空字符串
-> 加进 `COMMAND_START`：
+> NoneBot 默认只把 `/` 开头的消息当命令，想直接发 `status` 触发，需要把空字符串加进 `COMMAND_START`：
 >
 > ```properties
 > COMMAND_START=["", "/"]
@@ -120,7 +109,7 @@ status
 
 ## ⚙️ 配置
 
-在 `.env` 或 `.env.prod` 中添加；全部可选项，不配也能跑：
+在 `.env` 或 `.env.prod` 中添加；全部为可选项，可以开箱即用：
 
 ```env
 # --- 触发与权限 ---
@@ -130,11 +119,10 @@ STZMD_NEED_AT=false                        # 是否需要 @ 机器人才能触�
 STZMD_REPLY_TARGET=true                    # 是否回复触发者那条消息
 
 # --- 版式 ---
-STZMD_LAYOUT=full                          # full=综合长图 / gauge=只出电量环 / perf=只出设备性能
-STZMD_BLOCKS=["header", "gauge", "apps", "bots", "perf", "specs", "footer"]
-                                           # 板块开关，可选 header / gauge / apps / bots / perf / specs / footer
+STZMD_LAYOUT=full                            # full=综合长图 / gauge=只出电量环 / perf=只出设备性能
+STZMD_BLOCKS=["header", "gauge", "apps", "bots", "perf", "specs", "footer"]  # 板块开关，可选 header / gauge / apps / bots / perf / specs / footer
 STZMD_DEVICES=["cpu", "mem", "disk", "net"]  # 设备性能区逐设备开关，可选 cpu / mem / disk / net，列表顺序即图上顺序
-# STZMD_HOST_NAME=ENDFIELD-01              # 顶栏显示的主机名，默认用系统主机名
+# STZMD_HOST_NAME=ENDFIELD-01                # 顶栏显示的主机名，默认用系统主机名
 
 # --- 电量环 ---
 STZMD_GAUGE_VALUE_MAX=325799               # 环中间大数字的分母（终末地游戏口径）
@@ -147,8 +135,7 @@ STZMD_PIC_QUALITY=90                       # 出图质量（jpeg 有效）
 STZMD_DEVICE_SCALE_FACTOR=2                # 出图缩放倍率，2 表示按 2 倍分辨率渲染（更清晰、体积更大）
 STZMD_RENDER_TIMEOUT=30                    # 单张图渲染超时（秒）
 # STZMD_FONT_FAMILY="Noto Sans CJK SC"     # CSS 字体栈覆盖，默认用系统字体
-# STZMD_FONT_PATH=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
-                                           # 指定字体文件并内联进图片（≤ 8MB），字形一致性最稳
+# STZMD_FONT_PATH=/xxx/xxx.ttc             # 指定字体文件并内联进图片（≤ 8MB），字形一致性最稳
 # STZMD_EXTRA_CSS=/path/to/custom.css      # 追加自定义 CSS
 
 # --- 采样 ---
@@ -197,8 +184,7 @@ STZMD_REQ_TIMEOUT=10                       # 拉取头像 / Bot 信息的超时�
 
 ### 设备性能区出哪几行
 
-`STZMD_DEVICES` 控制设备性能区里出哪几行（可只留 `["cpu", "mem"]` 做轻量监控，
-或 `["net"]` 只看网络）：
+`STZMD_DEVICES` 控制设备性能区里出哪几行（可只留 `["cpu", "mem"]` 做轻量监控，或 `["net"]` 只看网络）：
 
 | 取值 | 对应行 |
 | --- | --- |
@@ -211,10 +197,7 @@ STZMD_REQ_TIMEOUT=10                       # 拉取头像 / Bot 信息的超时�
 
 ### 启动期采集超时
 
-宿主机的挂载点失联时（比如掉线的网络盘），采集可能阻塞很久。启动期（静态信息 +
-基准 + 首采）**共用一份** `STZMD_COLLECT_TIMEOUT` 总预算：超时**不会**中断采集，
-只是先放行——机器人照常启动，数据由下个采样周期补上；若出图时仍没有数据，会直接回
-一句「状态数据还没准备好」而不是卡住。
+宿主机的挂载点失联时（比如掉线的网络盘），采集可能阻塞很久。启动期（静态信息 + 基准 + 首采）**共用一份** `STZMD_COLLECT_TIMEOUT` 总预算：超时**不会**中断采集，只是先放行——机器人照常启动，数据由下个采样周期补上；若出图时仍没有数据，会直接回一句「状态数据还没准备好」而不是卡住。
 
 
 ## 💡 鸣谢

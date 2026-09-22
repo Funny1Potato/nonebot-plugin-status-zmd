@@ -5,11 +5,6 @@ description = "以《明日方舟：终末地》协议核心面板风格展示�
 authors = [{ name = "Funny1Potato" }]
 dependencies = [
     "nonebot2>=2.3.0",
-    # 下面几个都钉在「仍含所用 API 且能在 pydantic v2 下导入」的最早版本：
-    # apscheduler < 0.4.0 与 alconna < 0.37.0 还在用 pydantic v1 的 BaseSettings /
-    # Undefined（元数据说兼容，装上导入即炸）；uninfo < 0.2.0 没有 Interface.get_user；
-    # localstore < 0.7.1 没有 get_plugin_cache_dir；htmlrender 0.3.3 是第一个
-    # 只要求 nonebot2（不拖 [fastapi] extra）的版本
     "nonebot-plugin-apscheduler>=0.4.0",
     "nonebot-plugin-alconna>=0.37.0",
     "nonebot-plugin-uninfo>=0.2.0",
@@ -17,10 +12,8 @@ dependencies = [
     "nonebot-plugin-localstore>=0.7.1",
     "psutil>=5.9.0",
     "py-cpuinfo>=8.0.0",
-    # jinja2 >= 3.0.3 是 htmlrender 0.3.3 自己的要求
     "jinja2>=3.0.3",
     "anyio>=3.4.0",
-    # httpx 0.26 起才把代理参数叫 proxy（0.25 及以前是 proxies）
     "httpx>=0.26.0",
 ]
 requires-python = ">=3.10,<4.0"
