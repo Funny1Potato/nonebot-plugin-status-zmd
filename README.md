@@ -63,6 +63,9 @@ plugins = ["nonebot_plugin_status_zmd"]
 
 </details>
 
+> 需要 **nonebot2 >= 2.3.0**。2.3 上依赖会解析到偏低的一套（`alconna 0.59` /
+> `uninfo 0.6` / `htmlrender 0.6.3`），2.5 上则是最新的一套，两套都已实测。
+
 ### ⚠️ 渲染后端
 
 插件通过 `nonebot-plugin-htmlrender` 渲染页面，**0.6 / 0.7 / 0.8+ 都支持**，

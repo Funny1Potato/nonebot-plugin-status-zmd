@@ -6,9 +6,10 @@ authors = [{ name = "Funny1Potato" }]
 dependencies = [
     "nonebot2>=2.3.0",
     "nonebot-plugin-apscheduler>=0.5.0",
-    "nonebot-plugin-alconna>=0.62.1",
-    "nonebot-plugin-uninfo>=0.11.2",
-    "nonebot-plugin-htmlrender>=0.6.7",
+    # 以下三个自某个版本起把自已的 nonebot2 下限提到 2.5.0，钉在能配 2.3 的最高版本
+    "nonebot-plugin-alconna>=0.59.4",
+    "nonebot-plugin-uninfo>=0.6.10",
+    "nonebot-plugin-htmlrender>=0.6.3",
     "nonebot-plugin-localstore>=0.7.4",
     "psutil>=5.9.0",
     "py-cpuinfo>=9.0.0",
