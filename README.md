@@ -120,30 +120,57 @@ status
 
 ## ⚙️ 配置
 
-### 全部配置项见 [.env.example](.env.example)
+在 `.env` 或 `.env.prod` 中添加；全部可选项，不配也能跑：
 
-常用几项：
+```env
+# --- 触发与权限 ---
+STZMD_COMMAND=["status", "系统状态"]        # 触发指令，第一个为主指令，其余为别名
+STZMD_ONLY_SUPERUSER=true                  # 是否仅 SUPERUSER 可用（状态图含主机名/IP/进程/磁盘，不建议公开）
+STZMD_NEED_AT=false                        # 是否需要 @ 机器人才能触发
+STZMD_REPLY_TARGET=true                    # 是否回复触发者那条消息
 
-| 配置项 | 默认值 | 说明 |
-| --- | --- | --- |
-| `STZMD_LAYOUT` | `full` | `full` 综合长图 / `gauge` 只出电量环 / `perf` 只出设备性能 |
-| `STZMD_BLOCKS` | 全部 | 板块开关：`header` `gauge` `apps` `bots` `perf` `specs` `footer` |
-| `STZMD_DEVICES` | `cpu mem disk net` | 设备性能区逐设备开关，列表顺序即图上顺序 |
-| `STZMD_COMMAND` | `["status", "系统状态"]` | 触发指令，第一个为主指令，其余为别名 |
-| `STZMD_ONLY_SUPERUSER` | `true` | 是否仅 SUPERUSER 可用 |
-| `STZMD_NEED_AT` | `false` | 是否需要 @ 机器人才能触发 |
-| `STZMD_REPLY_TARGET` | `true` | 是否回复触发者那条消息 |
-| `STZMD_HOST_NAME` | 空 | 顶栏显示的主机名，留空用系统主机名 |
-| `STZMD_GAUGE_VALUE_MAX` | `325799` | 电量环分母（终末地的游戏口径） |
-| `STZMD_GAUGE_CPU_WEIGHT` / `STZMD_GAUGE_MEM_WEIGHT` | `0.4` / `0.6` | 电量环综合占用的 CPU / 内存权重 |
-| `STZMD_COLLECT_INTERVAL` | `5` | 后台采样间隔（秒） |
-| `STZMD_HISTORY_SIZE` | `180` | 走势图保留的采样点数（窗口 = 间隔 × 点数） |
-| `STZMD_COLLECT_TIMEOUT` | `15` | 单次采集等待上限（秒），超时先继续、不拖住启动 |
-| `STZMD_PIC_FORMAT` / `STZMD_PIC_QUALITY` | `jpeg` / `90` | 出图格式与质量 |
-| `STZMD_DEVICE_SCALE_FACTOR` | `2` | 出图缩放倍率，图更清晰、体积更大 |
-| `STZMD_FONT_FAMILY` | 空 | 指定 CSS 字体栈，例如 `"Noto Sans CJK SC"` |
-| `STZMD_FONT_PATH` | 空 | 指定字体文件并内联进图片（≤ 8MB），保证字形一致 |
-| `STZMD_IGNORE_PARTS` / `STZMD_IGNORE_NETS` / `STZMD_IGNORE_PROCS` | 见 .env.example | 忽略的分区 / 网卡 / 进程（正则） |
+# --- 版式 ---
+STZMD_LAYOUT=full                          # full=综合长图 / gauge=只出电量环 / perf=只出设备性能
+STZMD_BLOCKS=["header", "gauge", "apps", "bots", "perf", "specs", "footer"]
+                                           # 板块开关，可选 header / gauge / apps / bots / perf / specs / footer
+STZMD_DEVICES=["cpu", "mem", "disk", "net"]  # 设备性能区逐设备开关，可选 cpu / mem / disk / net，列表顺序即图上顺序
+# STZMD_HOST_NAME=ENDFIELD-01              # 顶栏显示的主机名，默认用系统主机名
+
+# --- 电量环 ---
+STZMD_GAUGE_VALUE_MAX=325799               # 环中间大数字的分母（终末地游戏口径）
+STZMD_GAUGE_CPU_WEIGHT=0.4                 # 综合占用里 CPU 的权重
+STZMD_GAUGE_MEM_WEIGHT=0.6                 # 综合占用里内存的权重（综合占用 = CPU×权重 + 内存×权重）
+
+# --- 渲染 ---
+STZMD_PIC_FORMAT=jpeg                      # 出图格式：jpeg / png
+STZMD_PIC_QUALITY=90                       # 出图质量（jpeg 有效）
+STZMD_DEVICE_SCALE_FACTOR=2                # 出图缩放倍率，2 表示按 2 倍分辨率渲染（更清晰、体积更大）
+STZMD_RENDER_TIMEOUT=30                    # 单张图渲染超时（秒）
+# STZMD_FONT_FAMILY="Noto Sans CJK SC"     # CSS 字体栈覆盖，默认用系统字体
+# STZMD_FONT_PATH=/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
+                                           # 指定字体文件并内联进图片（≤ 8MB），字形一致性最稳
+# STZMD_EXTRA_CSS=/path/to/custom.css      # 追加自定义 CSS
+
+# --- 采样 ---
+STZMD_COLLECT_INTERVAL=5                   # 后台常驻采样间隔（秒）
+STZMD_HISTORY_SIZE=180                     # 走势图保留的采样点数（窗口 = 间隔 × 点数，默认约 15 分钟）
+STZMD_COLLECT_TIMEOUT=15                   # 单次采集的等待上限（秒），超时先继续、不拖住启动
+STZMD_PROC_LEN=8                           # 应用概况里列出的进程数
+STZMD_PROC_SORT_BY=cpu                     # 进程排序依据：cpu / mem
+STZMD_IGNORE_PARTS=[]                      # 忽略的分区（正则），如 ["^/boot"]
+STZMD_IGNORE_NETS=["^lo(op)?\\d*$|^(Loopback|本地连接)"]   # 忽略的网卡（正则）
+STZMD_IGNORE_PROCS=["^System Idle Process$"]              # 忽略的进程（正则）
+STZMD_PROC_CPU_MAX_100P=false              # 进程 CPU 是否按单核算（false = 折算成整机占比，与任务管理器口径一致）
+
+# --- Bot 状态 ---
+STZMD_COUNT_MESSAGE_SENT=true              # 是否统计发送消息数（按各适配器的发消息 API 名计数）
+STZMD_SHOW_BOT_AVATAR=true                 # 是否拉取 Bot 头像
+STZMD_DISCONNECT_RESET_COUNTER=true        # Bot 断开时是否清零收发计数
+STZMD_REQ_TIMEOUT=10                       # 拉取头像 / Bot 信息的超时（秒）
+
+# --- 全局 ---
+# PROXY=http://127.0.0.1:7890              # 拉取 Bot 头像走的代理（NoneBot 全局配置，非本插件专属）
+```
 
 ### 版式与板块的关系
 
