@@ -112,13 +112,14 @@ def _normalize(series: list[float], *, limit: float | None) -> list[float]:
 
 
 def _build_apps(snapshot: Snapshot) -> list[AppRow]:
-    top_cpu = max((p.cpu for p in snapshot.procs), default=0.0)
-    top_mem = max((p.mem for p in snapshot.procs), default=0)
-    cpu_base = max(10.0, top_cpu)
-    mem_base = max(500 * 1024 * 1024, top_mem)
+    processes = snapshot.procs
+    cpu_ceiling = max((10.0, *(proc.cpu for proc in processes)))
+    memory_ceiling = max((500 * 1024**2, *(proc.mem for proc in processes)))
+    cpu_unit = 100 / cpu_ceiling
+    memory_unit = 100 / memory_ceiling
 
     rows: list[AppRow] = []
-    for proc in snapshot.procs:
+    for proc in processes:
         display = proc.name
         if display.lower().endswith(".exe"):
             display = display[:-4]
@@ -128,8 +129,8 @@ def _build_apps(snapshot: Snapshot) -> list[AppRow]:
                 sub=f"PID {proc.pid}",
                 cpu=proc.cpu,
                 mem=proc.mem,
-                cpu_pct=clamp(proc.cpu / cpu_base * 100, 2, 100),
-                mem_pct=clamp(proc.mem / mem_base * 100, 2, 100),
+                cpu_pct=clamp(proc.cpu * cpu_unit, 2, 100),
+                mem_pct=clamp(proc.mem * memory_unit, 2, 100),
                 icon=icon_svg(proc_icon_key(proc.name), 20),
             ),
         )

@@ -204,7 +204,11 @@ STZMD_REQ_TIMEOUT=10                       # 拉取头像 / Bot 信息的超时�
 
 ### [QinAnze/zmd-manager](https://github.com/QinAnze/zmd-manager)
 
-- 视觉效果实现参考
+- 起步时参考了视觉设计，沿用的实现已重写为独立实现
+
+### [Funny1Potato/zmd-orb](https://github.com/Funny1Potato/zmd-orb)
+
+- 图标素材复用自该项目
 
 ### [lgc-NB2Dev/nonebot-plugin-picstatus](https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus)
 

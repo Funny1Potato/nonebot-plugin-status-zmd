@@ -1,30 +1,25 @@
-{# 终末地风格的状态图部件。
-   所有几何与配色对齐 zmd-manager/frontend/index.html，改动点写在注释里。 #}
+{# 状态卡片的可复用视图；数值与视觉装饰分开组织。 #}
 
 {% macro ic(key, size=16) -%}
 <span class="ic">{{ icon(key, size) }}</span>
 {%- endmacro %}
 
 {% macro topbar(m) %}
-<header class="topbar">
-  <div class="logo">
-    <span class="logo-badge">END</span>
-    <span class="logo-text"><i>//</i>STATUS</span>
+<header class="masthead">
+  <div class="identity">
+    <span class="identity-mark">END</span>
+    <span class="identity-name"><i>//</i>STATUS</span>
   </div>
-  <nav class="nav-tabs">
-    <div class="tab{{ ' active' if m.gauge }}">
-      <span class="tab-ic">{{ icon('globals', 16) }}</span>综合
+  <nav class="section-nav">
+    {% for label, symbol, selected in [('综合', 'globals', m.gauge), ('设备', 'cpu', m.perf), ('终端', 'link', m.bots)] %}
+    <div class="section-link{{ ' selected' if selected }}">
+      <span class="section-symbol">{{ icon(symbol, 16) }}</span>{{ label }}
     </div>
-    <div class="tab{{ ' active' if m.perf }}">
-      <span class="tab-ic">{{ icon('cpu', 16) }}</span>设备
-    </div>
-    <div class="tab{{ ' active' if m.bots }}">
-      <span class="tab-ic">{{ icon('link', 16) }}</span>终端
-    </div>
+    {% endfor %}
   </nav>
-  <div class="spacer"></div>
-  <div class="src-chip">
-    <span class="src-dot {{ 'live' if m.source_ok else 'warn' }}"></span>{{ m.source_text }}
+  <div class="masthead-fill"></div>
+  <div class="source-pill">
+    <span class="source-indicator {{ 'live' if m.source_ok else 'warn' }}"></span>{{ m.source_text }}
   </div>
   <div class="host-chip">{{ m.host_name }}</div>
 </header>
@@ -32,38 +27,42 @@
 
 {% macro gauge(m) %}
 <section class="gauge-wrap">
-  <div class="gauge-stage">{{ m.gauge.svg|safe }}</div>
-  <div class="gauge-center">
-    <div class="report-badge">占用报告 <span class="toggle"></span></div>
-    <div class="big-num">{{ '{:,}'.format(m.gauge.value) }}</div>
-    <div class="of">/ {{ '{:,}'.format(m.gauge.value_max) }}</div>
-    <div class="uptime">{{ m.gauge.uptime }}</div>
-    <div class="uptime-sub">已运行</div>
+  <div class="dial-art">{{ m.gauge.svg|safe }}</div>
+  <div class="dial-readout">
+    <div class="report-chip"><span>占用报告</span> <span class="switch-mark"></span></div>
+    <div class="readout-number">{{ '{:,}'.format(m.gauge.value) }}</div>
+    <div class="readout-limit">/ {{ '{:,}'.format(m.gauge.value_max) }}</div>
+    <div class="readout-time">{{ m.gauge.uptime }}</div>
+    <div class="readout-caption">已运行</div>
   </div>
-  <div class="data-box box-actual">
-    <span class="lbl">实际占用</span>
-    <span class="val">{{ '{:,}'.format(m.gauge.value) }}</span>
+  <div class="metric-flag actual-flag">
+    <span class="metric-label">实际占用</span>
+    <span class="metric-value">{{ '{:,}'.format(m.gauge.value) }}</span>
   </div>
-  <div class="data-box flip box-max">
-    <span class="lbl">最大占用</span>
-    <span class="val">{{ '{:,}'.format(m.gauge.value_peak) }}</span>
+  <div class="metric-flag peak-flag">
+    <span class="metric-value">{{ '{:,}'.format(m.gauge.value_peak) }}</span>
+    <span class="metric-label">最大占用</span>
   </div>
 </section>
 {% endmacro %}
 
+{% macro panel_heading(title, meta) %}
+<div class="panel-title">
+  <h2>{{ title }}</h2>
+  <div class="meta">{{ meta }}</div>
+</div>
+{% endmacro %}
+
 {% macro apps(m) %}
-<section class="apps-panel">
-  <div class="panel-title">
-    <h2>应用概况</h2>
-    <div class="meta">{{ m.apps|length }} 项 · 按{{ '内存' if m.proc_sort_by == 'mem' else 'CPU' }}排序</div>
-  </div>
-  <div class="col-head" style="grid-template-columns: 1fr 130px 150px">
+<section class="process-panel">
+  {{ panel_heading('应用概况', (m.apps|length)|string ~ ' 项 · 按' ~ ('内存' if m.proc_sort_by == 'mem' else 'CPU') ~ '排序') }}
+  <div class="col-head process-columns">
     <div class="h">{{ ic('server') }}进程</div>
     <div class="h end">CPU</div>
     <div class="h end">内存</div>
   </div>
   {% for r in m.apps %}
-  <div class="app-row">
+  <div class="process-entry">
     <div class="name">
       <div class="icon">{{ r.icon|safe }}</div>
       <div>
@@ -73,11 +72,11 @@
     </div>
     <div class="cell">
       <span class="v">{{ '%.1f'|format(r.cpu) }}</span><span class="u">%</span>
-      <div class="mini-track"><div class="mini-bar" style="width: {{ '%.1f'|format(r.cpu_pct) }}%"></div></div>
+      <div class="spark-track"><div class="spark-fill" style="width: {{ '%.1f'|format(r.cpu_pct) }}%"></div></div>
     </div>
     <div class="cell">
       <span class="v">{{ (r.mem // 1048576) }}</span> <span class="u dim">MB</span>
-      <div class="mini-track"><div class="mini-bar" style="width: {{ '%.1f'|format(r.mem_pct) }}%"></div></div>
+      <div class="spark-track"><div class="spark-fill" style="width: {{ '%.1f'|format(r.mem_pct) }}%"></div></div>
     </div>
   </div>
   {% endfor %}
@@ -86,11 +85,8 @@
 
 {% macro bots(m) %}
 <section class="bots-panel">
-  <div class="panel-title">
-    <h2>终端链路</h2>
-    <div class="meta">{{ m.bots|length }} 个 Bot</div>
-  </div>
-  <div class="col-head" style="grid-template-columns: 1fr 130px 110px 110px">
+  {{ panel_heading('终端链路', (m.bots|length)|string ~ ' 个 Bot') }}
+  <div class="col-head bot-columns">
     <div class="h">{{ ic('bot') }}终端</div>
     <div class="h end">连接时长</div>
     <div class="h end">接收</div>
@@ -122,10 +118,7 @@
 
 {% macro perf(m) %}
 <section class="perf-panel">
-  <div class="panel-title">
-    <h2>设备性能</h2>
-    <div class="meta">{{ m.sample_desc }}</div>
-  </div>
+  {{ panel_heading('设备性能', m.sample_desc) }}
   <div class="perf-head-strip">
     <div class="h">{{ ic('server') }}设备信息</div>
     <div class="h center">{{ ic('timer') }}占用率走势</div>
@@ -144,7 +137,8 @@
     <div class="chart-cell">
       <div class="bars" style="--slots: {{ m.slots }}">
         {% for v in r.hist %}
-        <span class="bar" style="--h: {{ '%.1f'|format(v) }}%; --op: {{ '%.2f'|format(0.80 + (loop.index0 * 7 % 5) * 0.05) }}"></span>
+        {% set shades = ('0.80', '0.90', '1.00', '0.85', '0.95') %}
+        <span class="bar" style="--h: {{ '%.1f'|format(v) }}%; --op: {{ shades[loop.index0 % 5] }}"></span>
         {% endfor %}
       </div>
     </div>
@@ -169,10 +163,7 @@
 
 {% macro specs(m) %}
 <section class="specs-panel">
-  <div class="panel-title">
-    <h2>设备信息</h2>
-    <div class="meta">{{ m.system }}</div>
-  </div>
+  {{ panel_heading('设备信息', m.system) }}
   <div class="specs-grid">
     {% for label, value in m.specs %}
     <div class="spec-item">

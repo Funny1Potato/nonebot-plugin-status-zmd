@@ -1,8 +1,6 @@
 {% from 'macros.html.jinja' import topbar, gauge, apps, bots, perf, specs, bottom %}
-
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
   <meta charset="utf-8" />
   <title>终末状态 · ENDFIELD STYLE</title>
@@ -10,13 +8,11 @@
   {% if font_css %}<style>{{ font_css|safe }}</style>{% endif %}
   {% if extra_css %}<style>{{ extra_css|safe }}</style>{% endif %}
 </head>
-
 <body>
-  <div class="page">
+  <main class="page">
     {{ topbar(m) }}
-
-    {% set two_col = m.gauge and (m.apps or m.bots) %}
-    {% if two_col %}
+    {% set show_columns = m.gauge and (m.apps or m.bots) %}
+    {% if show_columns %}
     <div class="overview-grid">
       {{ gauge(m) }}
       <div class="right-col">
@@ -25,19 +21,14 @@
       </div>
     </div>
     {% else %}
-    {# 没有电量环（或它被关掉）时，各板块各自独占一行 #}
-    {% if m.gauge %}<div class="gauge-solo">{{ gauge(m) }}</div>{% endif %}
-    {% if m.apps %}{{ apps(m) }}{% endif %}
-    {% if m.bots %}{{ bots(m) }}{% endif %}
+      {% if m.gauge %}<div class="gauge-solo">{{ gauge(m) }}</div>{% endif %}
+      {% if m.apps %}{{ apps(m) }}{% endif %}
+      {% if m.bots %}{{ bots(m) }}{% endif %}
     {% endif %}
-
     {% if m.perf %}{{ perf(m) }}{% endif %}
-
     {% if m.specs %}{{ specs(m) }}{% endif %}
-
     {{ bottom(m) }}
-  </div>
-
+  </main>
   <script>
     (() => {
       const done = () => document.body.classList.add('done');
@@ -49,5 +40,4 @@
     })();
   </script>
 </body>
-
 </html>

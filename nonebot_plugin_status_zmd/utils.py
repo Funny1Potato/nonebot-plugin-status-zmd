@@ -34,9 +34,8 @@ def human_bytes(value: float, *, precision: int = 1) -> str:
 def human_bytes_pair(used: float, total: float, *, precision: int = 1) -> str:
     """把单位提到末尾的成对字节量，如 ``1.2 / 8.0 GB``。
 
-    单位按总量选取，但若已用量会显示成 ``0.x`` 就退一档——``0.5 / 1.0 TB``
-    把 486.2GB 压成了 0.5TB，精度丢得太多，退成 ``486.2 / 1024.0 GB`` 更接近
-    参考实现的 ``486 / 1024 GB`` 口径。
+    单位按总量选取，但若已用量会显示成 ``0.x`` 就退一档；例如已用
+    900 GB、总量 1 TB 时保留 GB 单位，避免把已用量四舍五入到个位 TB。
     """
     if total <= 0:
         return f"{human_bytes(used, precision=precision)} / —"
