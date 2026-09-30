@@ -134,22 +134,17 @@
       </div>
       <div class="dev-icon">{{ r.icon|safe }}</div>
     </div>
-    <div class="chart-cell">
-      <div class="bars" style="--slots: {{ m.slots }}">
-        {% for v in r.hist %}
-        {% set shades = ('0.80', '0.90', '1.00', '0.85', '0.95') %}
-        <span class="bar" style="--h: {{ '%.1f'|format(v) }}%; --op: {{ shades[loop.index0 % 5] }}"></span>
-        {% endfor %}
-      </div>
-    </div>
+    <div class="chart-cell">{{ spark(r, m.slots, loop.index0)|safe }}</div>
     <div class="cur-cell">
       <div class="cur-line">
+        <span class="series-dot primary"></span>
         <span class="lbl">{{ r.cur1_label }}</span>
-        <span class="v blue">{{ r.cur1_value }}</span>
+        <span class="v">{{ r.cur1_value }}</span>
       </div>
       <div class="cur-line">
+        <span class="series-dot secondary"></span>
         <span class="lbl">{{ r.cur2_label }}</span>
-        <span class="v orange">{{ r.cur2_value }}</span>
+        <span class="v">{{ r.cur2_value }}</span>
       </div>
     </div>
     <div class="spec-line">

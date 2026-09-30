@@ -10,6 +10,7 @@ from ..config import CSS_PATH, TEMPLATE_DIR, config
 from ..utils import file_to_data_uri
 from .icons import icon_svg
 from .model import RenderModel
+from .spark import spark_svg
 
 #: 单文件体积超过这个值就不内联，避免 HTML 膨胀到几十 MB
 MAX_FONT_BYTES = 8 * 1024 * 1024
@@ -22,6 +23,7 @@ ENV = jinja2.Environment(
     lstrip_blocks=True,
 )
 ENV.globals["icon"] = icon_svg
+ENV.globals["spark"] = spark_svg
 
 _css_cache: str | None = None
 

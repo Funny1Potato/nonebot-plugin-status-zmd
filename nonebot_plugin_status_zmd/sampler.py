@@ -95,9 +95,13 @@ class Sampler:
         self._deadline: float | None = None
 
         self.cpu_hist: deque[float] = deque(maxlen=size)
+        self.cpu_freq_hist: deque[float] = deque(maxlen=size)
         self.mem_hist: deque[float] = deque(maxlen=size)
+        self.swap_hist: deque[float] = deque(maxlen=size)
         self.disk_hist: dict[str, deque[float]] = {}
+        self.disk_rw_hist: dict[str, deque[float]] = {}
         self.net_hist: dict[str, deque[float]] = {}
+        self.net_up_hist: dict[str, deque[float]] = {}
 
     def _budget(self, default: float | None = None) -> float:
         """剩余预算；不在启动期时用 ``default``（默认取配置值）。"""
@@ -158,7 +162,9 @@ class Sampler:
         self.last_error = None
         # CPU 无基准时为 None，历史按 0 记以保持与内存序列等长
         self.cpu_hist.append(snapshot.cpu.percent or 0.0)
+        self.cpu_freq_hist.append(snapshot.cpu.freq_current or 0.0)
         self.mem_hist.append(snapshot.mem.percent)
+        self.swap_hist.append(snapshot.mem.swap_used / 1024**3)
 
         for disk in snapshot.disks:
             series = self.disk_hist.setdefault(
@@ -166,13 +172,23 @@ class Sampler:
                 deque(maxlen=config.stzmd_history_size),
             )
             series.append(disk.percent)
+            rates = self.disk_rw_hist.setdefault(
+                disk.mountpoint,
+                deque(maxlen=config.stzmd_history_size),
+            )
+            rates.append((disk.rw_bps or 0.0) / 1024**2)
 
         for net in snapshot.nets:
             series = self.net_hist.setdefault(
                 net.name,
                 deque(maxlen=config.stzmd_history_size),
             )
-            series.append(max(net.down_bps, net.up_bps) * 8 / 1e6)
+            series.append(net.down_bps * 8 / 1e6)
+            uploads = self.net_up_hist.setdefault(
+                net.name,
+                deque(maxlen=config.stzmd_history_size),
+            )
+            uploads.append(net.up_bps * 8 / 1e6)
 
         return snapshot
 

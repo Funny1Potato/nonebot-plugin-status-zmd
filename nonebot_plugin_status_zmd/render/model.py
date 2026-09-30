@@ -54,6 +54,10 @@ class PerfRow:
     cur2_value: str
     spec_label: str
     spec_value: str
+    hist2: list[float] = field(default_factory=list)
+    axis_unit1: str = "%"
+    axis_unit2: str = "%"
+    dual_axis: bool = False
 
 
 @dataclass
@@ -102,15 +106,6 @@ class RenderModel:
     source_text: str = "实时"
 
 
-def _normalize(series: list[float], *, limit: float | None) -> list[float]:
-    if not series:
-        return []
-    if limit and limit > 0:
-        return [clamp(v / limit * 100, 0, 100) for v in series]
-    top = max(series) or 1.0
-    return [clamp(v / top * 100, 0, 100) for v in series]
-
-
 def _build_apps(snapshot: Snapshot) -> list[AppRow]:
     processes = snapshot.procs
     cpu_ceiling = max((10.0, *(proc.cpu for proc in processes)))
@@ -151,7 +146,10 @@ def _cpu_row(snapshot: Snapshot, static: StaticInfo) -> PerfRow:
         name="处理器",
         sub=f"{threads} 线程 · {load_text}",
         icon=icon_svg("cpu"),
-        hist=_normalize(list(sampler.cpu_hist), limit=100),
+        hist=list(sampler.cpu_hist),
+        hist2=[value / 1000 for value in sampler.cpu_freq_hist],
+        axis_unit2="GHz",
+        dual_axis=True,
         cur1_label="占用",
         cur1_value=cpu_text,
         cur2_label="速度",
@@ -172,7 +170,10 @@ def _mem_row(snapshot: Snapshot, static: StaticInfo) -> PerfRow:
         name="内存",
         sub=f"已用 {human_bytes_pair(mem.used, mem.total)}",
         icon=icon_svg("memory"),
-        hist=_normalize(list(sampler.mem_hist), limit=100),
+        hist=list(sampler.mem_hist),
+        hist2=list(sampler.swap_hist),
+        axis_unit2="GB",
+        dual_axis=True,
         cur1_label="占用",
         cur1_value=format_percent(mem.percent),
         cur2_label="Swap",
@@ -191,10 +192,10 @@ def _disk_rows(snapshot: Snapshot) -> list[PerfRow]:
                 name=f"磁盘 {index} ({disk.mountpoint})",
                 sub=f"已用 {human_bytes_pair(disk.used, disk.total)}",
                 icon=icon_svg("disk"),
-                hist=_normalize(
-                    list(sampler.disk_hist.get(disk.mountpoint, [])),
-                    limit=100,
-                ),
+                hist=list(sampler.disk_hist.get(disk.mountpoint, [])),
+                hist2=list(sampler.disk_rw_hist.get(disk.mountpoint, [])),
+                axis_unit2="MB/s",
+                dual_axis=True,
                 cur1_label="占用",
                 cur1_value=format_percent(disk.percent),
                 cur2_label="读写",
@@ -216,10 +217,10 @@ def _net_rows(snapshot: Snapshot) -> list[PerfRow]:
                     f"链路 {net.speed_mbps} Mbps" if net.speed_mbps else "链路速率未知"
                 ),
                 icon=icon_svg("network"),
-                hist=_normalize(
-                    list(sampler.net_hist.get(net.name, [])),
-                    limit=net.speed_mbps,
-                ),
+                hist=list(sampler.net_hist.get(net.name, [])),
+                hist2=list(sampler.net_up_hist.get(net.name, [])),
+                axis_unit1="Mbps",
+                axis_unit2="Mbps",
                 cur1_label="下行",
                 cur1_value=format_bitrate(net.down_bps),
                 cur2_label="上行",
