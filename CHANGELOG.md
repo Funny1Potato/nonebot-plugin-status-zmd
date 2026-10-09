@@ -2,6 +2,11 @@
 
 版本用 git tag（`vX.Y.Z`）标记，推送 tag 后由 GitHub Actions 发布到 PyPI。
 
+## v0.2.1
+
+- 按 NoneBot 商店审查意见调整配置：内置/全局配置改用 `driver.config`，不再在插件配置模型里重复定义
+- `field_validator` 改从 `nonebot.compat` 导入，兼容 pydantic v1
+
 ## v0.2.0
 
 - 重写电量环纹理采样、面板样式和模板组织，保留现有布局与配色

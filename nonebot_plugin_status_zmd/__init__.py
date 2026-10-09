@@ -16,7 +16,7 @@ from .render import probe
 from .sampler import sampler
 from .utils import find_cjk_font
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 usage = f"指令：{' / '.join(config.stzmd_command)}"
 if config.stzmd_only_superuser:
