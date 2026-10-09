@@ -136,7 +136,8 @@ driver = get_driver()
 async def _fetch_avatar(url: str) -> bytes | None:
     try:
         async with httpx.AsyncClient(
-            proxy=config.proxy,
+            # PROXY 是 NoneBot 的全局配置，不进本插件的 ConfigModel
+            proxy=getattr(driver.config, "proxy", None),
             timeout=config.stzmd_req_timeout,
             follow_redirects=True,
         ) as client:

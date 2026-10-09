@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Literal
 
 from nonebot import get_plugin_config
-from pydantic import BaseModel, Field, field_validator
+from nonebot.compat import field_validator
+from pydantic import BaseModel, Field
 
 PLUGIN_DIR = Path(__file__).parent
 RES_DIR = PLUGIN_DIR / "res"
@@ -48,15 +49,6 @@ DEVICE_NAMES: tuple[str, ...] = ("cpu", "mem", "disk", "net")
 
 
 class ConfigModel(BaseModel):
-    # region nonebot 内置
-    superusers: set[str] = set()
-    nickname: set[str] = set()
-    # endregion
-
-    # region 全局
-    proxy: str | None = None
-    # endregion
-
     # region 行为
     stzmd_command: list[str] = ["status", "系统状态"]
     stzmd_only_superuser: bool = True
